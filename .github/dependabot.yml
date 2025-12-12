@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"                  # path to pyproject.toml / requirements files
+    schedule:
+      interval: "daily"
+    ignore:
+      - dependency-name: "python"
+        versions: ["<3.10"]
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # optionally you can include 'allow' or 'labels' here
