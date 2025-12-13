@@ -68,12 +68,7 @@ async def play_commnd(
     url,
     fplay,
 ):
-    emoji = random.choice(EMOJII)
-
-
-    asyncio.create_task(delete_after_delay(sticker_msg))
-
-    # स्टिकर के बाद का play message
+    
     mystic = await message.reply_text(_["play_2"].format(channel) if channel else emoji)
     plist_id = None
     slider = None
