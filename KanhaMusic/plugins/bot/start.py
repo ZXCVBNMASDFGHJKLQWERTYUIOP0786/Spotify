@@ -176,6 +176,7 @@ async def start_pm(client, message: Message, _):
                 app.mention
             ),
             has_spoiler=True,
+            message_effect_id=random.choice(EFFECT_IDS),
         ),
         reply_markup=InlineKeyboardMarkup(
             private_panel(_)
