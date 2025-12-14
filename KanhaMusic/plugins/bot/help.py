@@ -10,7 +10,7 @@ from KanhaMusic.misc import SUDOERS
 from KanhaMusic.utils import help_pannel
 from KanhaMusic.utils.database import get_lang
 from KanhaMusic.utils.decorators.language import LanguageStart, languageCB
-from KanhaMusic.utils.inline.help import help_back_markup, private_help_panel
+from KanhaMusic.utils.inline.help import help_back_markup, private_help_panel, Support_panel
 from config import BANNED_USERS, START_IMG_URL, SUPPORT_CHAT
 from strings import get_string, helpers
 
@@ -88,4 +88,4 @@ async def helper_cb(client, CallbackQuery, _):
 
 
     elif cb == "support":
-        await CallbackQuery.edit_message_text(helpers.ABOUT_READ, reply_markup=keyboard)
+        await CallbackQuery.edit_message_text(helpers.ABOUT_READ, reply_markup=Support_panel)
