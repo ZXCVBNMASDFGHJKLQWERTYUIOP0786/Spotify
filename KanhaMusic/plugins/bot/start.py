@@ -28,6 +28,48 @@ from strings import get_string
 _boot_ = time.time()
 
 
+
+
+NEXIO = [
+    "https://files.catbox.moe/x5lytj.jpg",
+    "https://files.catbox.moe/psya34.jpg",
+    "https://files.catbox.moe/leaexg.jpg",
+    "https://files.catbox.moe/b0e4vk.jpg",
+    "https://files.catbox.moe/1b1wap.jpg",
+    "https://files.catbox.moe/ommjjk.jpg",
+    "https://files.catbox.moe/onurxm.jpg",
+    "https://files.catbox.moe/97v75k.jpg",
+    "https://files.catbox.moe/t833zy.jpg",
+    "https://files.catbox.moe/472piq.jpg",
+    "https://files.catbox.moe/qwjeyk.jpg",
+    "https://files.catbox.moe/t0hopv.jpg",
+    "https://files.catbox.moe/u5ux0j.jpg",
+    "https://files.catbox.moe/h1yk4w.jpg",
+    "https://files.catbox.moe/gl5rg8.jpg",
+]
+
+# Stickers
+PURVI_STKR = [
+    "CAACAgUAAxkBAAIBO2i1Spi48ZdWCNehv-GklSI9aRYWAAJ9GAACXB-pVds_sm8brMEqHgQ",
+    "CAACAgUAAxkBAAIBOmi1Sogwaoh01l5-e-lJkK1VNY6MAAIlGAACKI6wVVNEvN-6z3Z7HgQ",
+    "CAACAgUAAxkBAAIBPGi1Spv1tlx90xM1Q7TRNyL0fhcJAAKDGgACZSupVbmJpWW9LmXJHgQ",
+    "CAACAgUAAxkBAAIBPWi1SpxJZKxuWYsZ_G06j_G_9QGkAAIsHwACdd6xVd2HOWQPA_qtHgQ",
+    "CAACAgUAAxkBAAIBPmi1Sp4QFoLkZ0oN3d01kZQOHQRwAAI4FwACDDexVVp91U_1BZKFHgQ",
+    "CAACAgUAAxkBAAIBP2i1SqFoa4yqgl1QSISZrQ4VuYWgAAIpFQACvTqpVWqbFSKOnWYxHgQ",
+    "CAACAgUAAxkBAAIBQGi1Sqk3OGQ2jRW2rN6ZVZ7vWY2ZAAJZHQACCa-pVfefqZZtTHEdHgQ",
+]
+
+# Effect IDs
+EFFECT_IDS = [
+    5046509860389126442,
+    5107584321108051014,
+    5104841245755180586,
+    5159385139981059251,
+]
+
+emojis = ["🥰", "🔥", "💖", "😁", "😎", "🌚", "❤️‍🔥", "♥️", "🎉", "🙈"]
+
+
 # ============================
 #        START — PRIVATE
 # ============================
