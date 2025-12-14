@@ -69,8 +69,8 @@ async def about_read_cb(client, callback_query: CallbackQuery, _):
     buttons = [
         [
             InlineKeyboardButton(
-                text=_["BACK_BUTTON"],
-                callback_data="settings_back_helper"
+                text="Support",
+                url="https://t.me/ur_rishu_143"
             )
         ]
     ]
