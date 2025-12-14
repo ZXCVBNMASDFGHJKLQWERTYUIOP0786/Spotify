@@ -1,11 +1,4 @@
-#
-# Copyright (C) 2025-2026 by OyeKanhaa@Github, < https://github.com/OyeKanhaa >.
-#
-# This file is part of < https://github.com/OyeKanhaa/KanhaMusic > project,
-# and is released under the "GNU v3.0 License Agreement".
-# Please see < https://github.com/OyeKanhaa/KanhaMusic/blob/master/LICENSE >
-#
-# All rights reserved.
+
 
 from typing import Union
 
@@ -91,4 +84,8 @@ async def helper_cb(client, CallbackQuery, _):
     elif cb == "hb8":
         await CallbackQuery.edit_message_text(helpers.HELP_8, reply_markup=keyboard)
     elif cb == "hb9":
+        await CallbackQuery.edit_message_text(helpers.HELP_9, reply_markup=keyboard)
+
+
+    elif cb == "support":
         await CallbackQuery.edit_message_text(helpers.HELP_9, reply_markup=keyboard)
