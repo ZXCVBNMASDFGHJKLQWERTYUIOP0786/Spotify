@@ -87,5 +87,5 @@ async def helper_cb(client, CallbackQuery, _):
         await CallbackQuery.edit_message_text(helpers.HELP_9, reply_markup=keyboard)
 
 
-    elif cb == "support":
+    elif cb == "llpport":
         await CallbackQuery.edit_message_text(helpers.ABOUT_READ, reply_markup=pport_panel)
