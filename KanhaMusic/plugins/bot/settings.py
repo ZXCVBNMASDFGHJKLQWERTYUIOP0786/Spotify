@@ -1,11 +1,4 @@
-#
-# Copyright (C) 2025-2026 by OyeKanhaa@Github, < https://github.com/OyeKanhaa >.
-#
-# This file is part of < https://github.com/OyeKanhaa/KanhaMusic > project,
-# and is released under the "GNU v3.0 License Agreement".
-# Please see < https://github.com/OyeKanhaa/KanhaMusic/blob/master/LICENSE >
-#
-# All rights reserved.
+
 
 from pyrogram import filters
 from pyrogram.enums import ChatType
@@ -84,7 +77,7 @@ async def about_read_cb(client, callback_query: CallbackQuery, _):
 
     await callback_query.edit_message_text(
         ABOUT_READ,
-        parse_mode="html",
+        parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
