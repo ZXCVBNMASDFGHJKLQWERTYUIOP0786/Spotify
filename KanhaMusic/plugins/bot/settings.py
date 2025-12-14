@@ -42,6 +42,56 @@ async def settings_mar(client, message: Message, _):
     )
 
 
+
+ABOUT_READ = """<blockquote expandable><b>
+───────────────────────
+❖ ɪ ʜᴧᴠє ϻσsᴛ ᴘσᴡєʀғυʟʟ υsєғυʟ ɢʀσυᴘ
+    ᴄʜᴀᴛʙᴏᴛ + ᴄʟᴏɴᴇʀ ʙσᴛ ғєᴧᴛυʀєs
+───────────────────────
+● ᴡʀɪᴛᴛєη ɪη ᴩʏᴛʜση ᴡɪᴛʜ sǫʟᴧʟᴄʜєϻʏ
+   ᴧηᴅ ϻσηɢσᴅʙ ᴧs ᴅᴧᴛᴧʙᴧsє
+───────────────────────
+● ɪ ᴄᴧη ʀєꜱᴛʀɪᴄᴛ υꜱєʀꜱ
+● ɪ ʜᴧᴠє ᴧη ᴧᴅᴠᴧηᴄєᴅ ᴧηᴛɪ-ꜰʟσσᴅ ꜱʏꜱᴛєϻ
+● ᴧᴅᴠᴧηᴄє ϻᴧηᴧɢєϻєηᴛ ᴄᴧᴘᴧʙɪʟɪᴛʏ
+● ᴧηɪϻє ʙσᴛ ғυηᴄᴛɪσηᴧʟɪᴛʏ
+● ᴧɪ ɪηᴛєɢʀᴧᴛɪση
+───────────────────────
+❖ υᴘᴅᴧᴛєs ᴄʜᴧηηєʟ ➥ <a href="https://t.me/ur_rishu_143">ʀɪsʜυ υᴘᴅᴧᴛє</a>
+❖ sυᴘᴘσʀᴛ ᴄʜᴧᴛ ➥ <a href="https://t.me/ur_support07">ʀɪsʜυ sυᴘᴘσʀᴛ</a>
+❖ ʀєᴧʟ σᴡηєʀ ➥ <a href="https://t.me/Rishu1286">ʀɪsʜυ sᴧηᴧᴛᴧηɪ</a>
+❖ ʀєᴘσ ➥ <a href="https://github.com/RishuBot">ʀєᴘσ</a>
+───────────────────────
+❖ ᴄʟɪᴄᴋ ση ᴛʜє ʜєʟᴩ ʙυᴛᴛση ᴛσ ɢєᴛ ɪηғσ
+    ᴧʙσυᴛ ϻʏ ϻσᴅυʟєs ᴧηᴅ ᴄσϻϻᴧηᴅs...!
+───────────────────────
+</b></blockquote>
+"""
+
+
+@app.on_callback_query(filters.regex("^about_read$") & ~BANNED_USERS)
+@languageCB
+async def about_read_cb(client, callback_query: CallbackQuery, _):
+
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text=_["BACK_BUTTON"],
+                callback_data="settings_back_helper"
+            )
+        ]
+    ]
+
+    await callback_query.edit_message_text(
+        ABOUT_READ,
+        parse_mode="html",
+        disable_web_page_preview=True,
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+
+
+
 @app.on_callback_query(filters.regex("settings_helper") & ~BANNED_USERS)
 @languageCB
 async def settings_cb(client, CallbackQuery, _):
