@@ -149,37 +149,38 @@ async def start_pm(client, message: Message, _):
                 reply_markup=key,
             )
 
-    
+    # ============================
+    #  START NORMAL (NO PARAMETER)
+    # ============================
 
-# 1️⃣ First ONLY TEXT message
-msg = await message.reply_text(
-    f"<b>ʜᴇʏ ʙᴧʙʏ {message.from_user.mention}</b>"
-)
-
-await asyncio.sleep(0.5)
-
-# 2️⃣ Edit text (still TEXT, no image)
-await msg.edit_text(
-    "<b>ɪ ᴧᴍ ʏᴏᴜʀ ᴍᴜsɪᴄ ʙᴏᴛ..🦋</b>"
-)
-
-await asyncio.sleep(0.5)
-
-# 3️⃣ FINAL EDIT → convert SAME message to PHOTO + INLINE
-await msg.edit_media(
-    media=InputMediaPhoto(
-        media=random.choice(NEXIO),
-        caption=_["start_2"].format(
-            message.from_user.mention,
-            app.mention
-        ),
-        has_spoiler=True,
-    ),
-    reply_markup=InlineKeyboardMarkup(
-        private_panel(_)
+    # 1️⃣ First ONLY TEXT
+    msg = await message.reply_text(
+        f"<b>ʜᴇʏ ʙᴧʙʏ {message.from_user.mention}</b>"
     )
-)
 
+    await asyncio.sleep(0.5)
+
+    # 2️⃣ Edit text
+    await msg.edit_text(
+        "<b>ɪ ᴧᴍ ʏᴏᴜʀ ᴍᴜsɪᴄ ʙᴏᴛ..🦋</b>"
+    )
+
+    await asyncio.sleep(0.5)
+
+    # 3️⃣ FINAL → TEXT ➜ IMAGE + INLINE
+    await msg.edit_media(
+        media=InputMediaPhoto(
+            media=random.choice(NEXIO),
+            caption=_["start_2"].format(
+                message.from_user.mention,
+                app.mention
+            ),
+            has_spoiler=True,
+        ),
+        reply_markup=InlineKeyboardMarkup(
+            private_panel(_)
+        )
+    )
 
 # ============================
 #        START — GROUP
