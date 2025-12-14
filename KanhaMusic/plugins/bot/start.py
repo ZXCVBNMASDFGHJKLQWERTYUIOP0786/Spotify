@@ -1,5 +1,7 @@
 import time, asyncio
 import random
+
+from pyrogram.types import InputMediaPhoto
 from pyrogram import filters
 from pyrogram.enums import ChatType
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -147,34 +149,36 @@ async def start_pm(client, message: Message, _):
                 reply_markup=key,
             )
 
-    # ============================
-    #      NORMAL START (FIXED)
-    # ============================
+    
 
-    rishu = await message.reply_photo(
-        photo=random.choice(NEXIO),
-        has_spoiler=True,
-        message_effect_id=random.choice(EFFECT_IDS),
-        caption=f"<b>ʜᴇʏ ʙᴧʙʏ {message.from_user.mention}</b>",
-    )
+# 1️⃣ First ONLY TEXT message
+msg = await message.reply_text(
+    f"<b>ʜᴇʏ ʙᴧʙʏ {message.from_user.mention}</b>"
+)
 
-    await asyncio.sleep(0.4)
+await asyncio.sleep(0.5)
 
-    await rishu.edit_caption(
-        "<b>ɪ ᴧᴍ ʏᴏᴜʀ ᴍᴜsɪᴄ ʙᴏᴛ..🦋</b>"
-    )
+# 2️⃣ Edit text (still TEXT, no image)
+await msg.edit_text(
+    "<b>ɪ ᴧᴍ ʏᴏᴜʀ ᴍᴜsɪᴄ ʙᴏᴛ..🦋</b>"
+)
 
-    await asyncio.sleep(0.4)
+await asyncio.sleep(0.5)
 
-    await rishu.edit_caption(
-        _["start_2"].format(
+# 3️⃣ FINAL EDIT → convert SAME message to PHOTO + INLINE
+await msg.edit_media(
+    media=InputMediaPhoto(
+        media=random.choice(NEXIO),
+        caption=_["start_2"].format(
             message.from_user.mention,
             app.mention
         ),
-        reply_markup=InlineKeyboardMarkup(
-            private_panel(_)
-        ),
+        has_spoiler=True,
+    ),
+    reply_markup=InlineKeyboardMarkup(
+        private_panel(_)
     )
+)
 
 
 # ============================
