@@ -88,4 +88,4 @@ async def helper_cb(client, CallbackQuery, _):
 
 
     elif cb == "support":
-        await CallbackQuery.edit_message_text(helpers.HELP_9, reply_markup=keyboard)
+        await CallbackQuery.edit_message_text(helpers.ABOUT_READ, reply_markup=keyboard)
