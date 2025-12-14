@@ -8,15 +8,12 @@ from youtubesearchpython.__future__ import VideosSearch
 import config
 from KanhaMusic import app
 from KanhaMusic.plugins.sudo.sudoers import sudoers_list
-from KanhaMusic.utils.database import get_served_chats, get_served_users, get_sudoers
-from KanhaMusic.utils import bot_sys_stats
 from KanhaMusic.utils.database import (
     add_served_chat,
     add_served_user,
     blacklisted_chats,
     get_lang,
     is_banned_user,
-    is_on_off,
 )
 from KanhaMusic.utils.decorators.language import LanguageStart
 from KanhaMusic.utils.formatters import get_readable_time
@@ -24,48 +21,11 @@ from KanhaMusic.utils.inline import help_pannel, private_panel, start_panel
 from config import BANNED_USERS
 from strings import get_string
 
-# 🔥 FIX: BOT BOOT TIME
+
+# ============================
+#        BOT BOOT TIME
+# ============================
 _boot_ = time.time()
-
-# Images
-NEXIO = [
-    "https://files.catbox.moe/x5lytj.jpg",
-    "https://files.catbox.moe/psya34.jpg",
-    "https://files.catbox.moe/leaexg.jpg",
-    "https://files.catbox.moe/b0e4vk.jpg",
-    "https://files.catbox.moe/1b1wap.jpg",
-    "https://files.catbox.moe/ommjjk.jpg",
-    "https://files.catbox.moe/onurxm.jpg",
-    "https://files.catbox.moe/97v75k.jpg",
-    "https://files.catbox.moe/t833zy.jpg",
-    "https://files.catbox.moe/472piq.jpg",
-    "https://files.catbox.moe/qwjeyk.jpg",
-    "https://files.catbox.moe/t0hopv.jpg",
-    "https://files.catbox.moe/u5ux0j.jpg",
-    "https://files.catbox.moe/h1yk4w.jpg",
-    "https://files.catbox.moe/gl5rg8.jpg",
-]
-
-# Stickers
-PURVI_STKR = [
-    "CAACAgUAAxkBAAIBO2i1Spi48ZdWCNehv-GklSI9aRYWAAJ9GAACXB-pVds_sm8brMEqHgQ",
-    "CAACAgUAAxkBAAIBOmi1Sogwaoh01l5-e-lJkK1VNY6MAAIlGAACKI6wVVNEvN-6z3Z7HgQ",
-    "CAACAgUAAxkBAAIBPGi1Spv1tlx90xM1Q7TRNyL0fhcJAAKDGgACZSupVbmJpWW9LmXJHgQ",
-    "CAACAgUAAxkBAAIBPWi1SpxJZKxuWYsZ_G06j_G_9QGkAAIsHwACdd6xVd2HOWQPA_qtHgQ",
-    "CAACAgUAAxkBAAIBPmi1Sp4QFoLkZ0oN3d01kZQOHQRwAAI4FwACDDexVVp91U_1BZKFHgQ",
-    "CAACAgUAAxkBAAIBP2i1SqFoa4yqgl1QSISZrQ4VuYWgAAIpFQACvTqpVWqbFSKOnWYxHgQ",
-    "CAACAgUAAxkBAAIBQGi1Sqk3OGQ2jRW2rN6ZVZ7vWY2ZAAJZHQACCa-pVfefqZZtTHEdHgQ",
-]
-
-# Effect IDs
-EFFECT_IDS = [
-    5046509860389126442,
-    5107584321108051014,
-    5104841245755180586,
-    5159385139981059251,
-]
-
-emojis = ["🥰", "🔥", "💖", "😁", "😎", "🌚", "❤️‍🔥", "♥️", "🎉", "🙈"]
 
 
 # ============================
@@ -79,7 +39,7 @@ async def start_pm(client, message: Message, _):
     # SAVE USER
     await add_served_user(message.from_user.id)
 
-    # 🔥 FIX: Reaction safe try/except
+    # Reaction
     try:
         await message.react(random.choice(emojis))
     except:
@@ -94,23 +54,18 @@ async def start_pm(client, message: Message, _):
     if len(message.text.split()) > 1:
         name = message.text.split(None, 1)[1]
 
-        # help
         if name.startswith("help"):
-            keyboard = help_pannel(_)
             return await message.reply_photo(
                 random.choice(NEXIO),
                 has_spoiler=True,
                 message_effect_id=random.choice(EFFECT_IDS),
                 caption=_["help_1"].format(config.SUPPORT_CHAT),
-                reply_markup=keyboard,
+                reply_markup=help_pannel(_),
             )
 
-        # sudolist
         if name.startswith("sud"):
-            await sudoers_list(client=client, message=message, _=_)
-            return
+            return await sudoers_list(client=client, message=message, _=_)
 
-        # info
         if name.startswith("inf"):
             m = await message.reply_text("🔎")
             query = name.replace("info_", "")
@@ -150,46 +105,59 @@ async def start_pm(client, message: Message, _):
                 reply_markup=key,
             )
 
-    # ---- NORMAL START ----
-    rishu = await message.reply_text(f"<b>ʜᴇʏ ʙᴧʙʏ {message.from_user.mention} </b>")
-    await asyncio.sleep(0.4)
-    await rishu.edit_text("<b>ɪ ᴧᴍ ʏᴏᴜʀ ᴍᴜsɪᴄ ʙᴏᴛ..🦋</b>")
-    await asyncio.sleep(0.4)
-    await rishu.edit_text("<b>ʜᴏᴡ ᴧʀᴇ ʏᴏᴜ ᴛᴏᴅᴧʏ.....??</b>")
-    await asyncio.sleep(0.4)
-    await rishu.delete()
+    # ============================
+    #      NORMAL START (FIXED)
+    # ============================
 
-    out = private_panel(_)
-    await message.reply_photo(
-        random.choice(NEXIO),
+    rishu = await message.reply_photo(
+        photo=random.choice(NEXIO),
         has_spoiler=True,
+        message_effect_id=random.choice(EFFECT_IDS),
+        caption=f"<b>ʜᴇʏ ʙᴧʙʏ {message.from_user.mention}</b>",
+    )
 
-message_effect_id=random.choice(EFFECT_IDS),
-        caption=_["start_2"].format(message.from_user.mention, app.mention),
-        reply_markup=InlineKeyboardMarkup(out),
+    await asyncio.sleep(0.4)
+
+    await rishu.edit_caption(
+        "<b>ɪ ᴧᴍ ʏᴏᴜʀ ᴍᴜsɪᴄ ʙᴏᴛ..🦋</b>"
+    )
+
+    await asyncio.sleep(0.4)
+
+    await rishu.edit_caption(
+        _["start_2"].format(
+            message.from_user.mention,
+            app.mention
+        ),
+        reply_markup=InlineKeyboardMarkup(
+            private_panel(_)
+        ),
     )
 
 
 # ============================
-#        START — GROUPS
+#        START — GROUP
 # ============================
 
 @app.on_message(filters.command(["start"]) & filters.group & ~BANNED_USERS)
 @LanguageStart
 async def start_gp(client, message: Message, _):
-    out = start_panel(_)
 
-    # 🔥 FIX: uptime safe
     uptime = int(time.time() - _boot_)
 
     await message.reply_photo(
         random.choice(NEXIO),
         has_spoiler=True,
-        caption=_["start_1"].format(app.mention, get_readable_time(uptime)),
-        reply_markup=InlineKeyboardMarkup(out),
+        caption=_["start_1"].format(
+            app.mention,
+            get_readable_time(uptime),
+        ),
+        reply_markup=InlineKeyboardMarkup(
+            start_panel(_)
+        ),
     )
 
-    return await add_served_chat(message.chat.id)
+    await add_served_chat(message.chat.id)
 
 
 # ============================
@@ -198,6 +166,7 @@ async def start_gp(client, message: Message, _):
 
 @app.on_message(filters.new_chat_members, group=-1)
 async def welcome(client, message: Message):
+
     for member in message.new_chat_members:
         try:
             language = await get_lang(message.chat.id)
@@ -210,6 +179,7 @@ async def welcome(client, message: Message):
                     pass
 
             if member.id == app.id:
+
                 if message.chat.type != ChatType.SUPERGROUP:
                     await message.reply_text(_["start_4"])
                     return await app.leave_chat(message.chat.id)
@@ -225,20 +195,22 @@ async def welcome(client, message: Message):
                     )
                     return await app.leave_chat(message.chat.id)
 
-                out = start_panel(_)
                 await message.reply_photo(
                     random.choice(NEXIO),
-                    has_spoiler=True, caption=_["start_3"].format(
+                    has_spoiler=True,
+                    caption=_["start_3"].format(
                         message.from_user.mention,
                         app.mention,
                         message.chat.title,
                         app.mention,
                     ),
-                    reply_markup=InlineKeyboardMarkup(out),
+                    reply_markup=InlineKeyboardMarkup(
+                        start_panel(_)
+                    ),
                 )
 
                 await add_served_chat(message.chat.id)
                 await message.stop_propagation()
 
-        except Exception as ex:
-            print(ex)
+        except Exception as e:
+            print(e)
