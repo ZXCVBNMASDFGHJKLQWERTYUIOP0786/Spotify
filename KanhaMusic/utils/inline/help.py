@@ -92,7 +92,7 @@ def private_help_panel(_):
 
 
 
-def Support_panel(_):
+def pport_panel(_):
     buttons = [
              [
 InlineKeyboardButton(text=_["S_B_5"], user_id=config.OWNER_ID),
