@@ -30,14 +30,6 @@ from strings import get_string
 _boot_ = time.time()
 
 
-NEXIO = [
-    "https://files.catbox.moe/wy1exf.jpg",
-    "https://files.catbox.moe/hdo3d0.jpg",
-    "https://files.catbox.moe/pf0ouq.jpg",
-    "https://files.catbox.moe/hsmyvi.jpg",
-    "https://files.catbox.moe/whnfs1.jpg",
-]
-
 # Effect IDs
 EFFECT_IDS = [
     5046509860389126442,
@@ -72,7 +64,7 @@ async def start_pm(client, message: Message, _):
 
         if name.startswith("help"):
             return await message.reply_photo(
-                random.choice(NEXIO),
+                photo=random.choice(config.START_IMG_URL),
                 has_spoiler=True,
                 caption=_["help_1"].format(config.SUPPORT_CHAT),
                 reply_markup=help_pannel(_),
@@ -129,9 +121,15 @@ async def start_pm(client, message: Message, _):
     #  START NORMAL (NO PARAMETER)
     # ============================
     
-    # Direct Photo Send (Text animation removed)
+    # Direct Photo Send using Config Variable
+    if config.START_IMG_URL:
+        photo_url = random.choice(config.START_IMG_URL)
+    else:
+        # Fallback agar config khali ho
+        photo_url = "https://te.legra.ph/file/72225679c177dc51df71b.jpg"
+
     await message.reply_photo(
-        photo=random.choice(NEXIO),
+        photo=photo_url,
         caption=_["start_2"].format(
             message.from_user.mention,
             app.mention
@@ -150,9 +148,14 @@ async def start_pm(client, message: Message, _):
 async def start_gp(client, message: Message, _):
 
     uptime = int(time.time() - _boot_)
+    
+    if config.START_IMG_URL:
+        photo_url = random.choice(config.START_IMG_URL)
+    else:
+        photo_url = "https://te.legra.ph/file/72225679c177dc51df71b.jpg"
 
     await message.reply_photo(
-        random.choice(NEXIO),
+        photo=photo_url,
         has_spoiler=True,
         caption=_["start_1"].format(
             app.mention,
@@ -202,9 +205,14 @@ async def welcome(client, message: Message):
                         disable_web_page_preview=True,
                     )
                     return await app.leave_chat(message.chat.id)
+                
+                if config.START_IMG_URL:
+                    photo_url = random.choice(config.START_IMG_URL)
+                else:
+                    photo_url = "https://te.legra.ph/file/72225679c177dc51df71b.jpg"
 
                 await message.reply_photo(
-                    random.choice(NEXIO),
+                    photo=photo_url,
                     has_spoiler=True,
                     caption=_["start_3"].format(
                         message.from_user.mention,
