@@ -114,7 +114,7 @@ def support_panel(_):
         [
             InlineKeyboardButton(
                 text="🔙 BACK",
-                callback_data="settings_back_helper", # Fixed callback to match Home/Back logic
+                callback_data="back_to_home", # Fixed callback to match Home/Back logic
             )
         ],
     ]
