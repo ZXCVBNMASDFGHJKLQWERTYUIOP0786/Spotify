@@ -68,6 +68,13 @@ async def play_commnd(
     url,
     fplay,
 ):
+
+sticker_msg = await message.reply_sticker(
+        "CAACAgUAAyEFAASOlzVAAAEBbMVoZBvc22oR8X-QlMPpERj8bdrDtgAChAsAAjXBOFddqD7hjDYLoh4E"
+    )
+
+    asyncio.create_task(delete_after_delay(sticker_msg))
+
     mystic = await message.reply_text(
         _["play_2"].format(channel) if channel else _["play_1"]
     )
