@@ -89,7 +89,7 @@ def support_panel(_):
         [
             InlineKeyboardButton(
                 text="🔙 BACK",
-                callback_data="settings_back_helper",
+                callback_data="back_to_home",
             )
         ],
     ]
