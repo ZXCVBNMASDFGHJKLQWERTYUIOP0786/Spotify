@@ -92,13 +92,13 @@ confirmer = {}
 # Yahan .split() lagaya hai taaki aap multiple links daal sakein (space dekar)
 START_IMG_URL = getenv(
     "START_IMG_URL",
-    "https://te.legra.ph/file/72225679c177dc51df71b.jpg https://te.legra.ph/file/6298d377ad3eb46711644.jpg",
+    "https://files.catbox.moe/ylib9t.jpg https://files.catbox.moe/z9aneo.jpg",
 ).split()
 
 # Agar PING_IMG_URL ke saath bhi same issue aaye, toh iska link bhi change kar dena
 PING_IMG_URL = getenv(
     "PING_IMG_URL",
-    "https://te.legra.ph/file/6298d377ad3eb46711644.jpg",
+    "https://files.catbox.moe/09cwq2.jpg",
 )
 # --- EDITED SECTION ENDS ---
 
