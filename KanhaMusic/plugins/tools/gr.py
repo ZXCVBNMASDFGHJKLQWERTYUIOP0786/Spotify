@@ -1,10 +1,10 @@
 import re
 import time
-import json
 import asyncio
 import aiohttp
+from urllib.parse import quote
 
-from pyrogram import Client, filters
+from pyrogram import filters
 from pyrogram.types import (
     Message,
     CallbackQuery,
@@ -12,18 +12,16 @@ from pyrogram.types import (
     InlineKeyboardButton,
     ChatPermissions
 )
+
 from motor.motor_asyncio import AsyncIOMotorClient
 
-
 from KanhaMusic import app
-from config 
-
+from config import MONGO_DB_URI
 
 # =========================================================
 # CONFIG
 # =========================================================
 
-TELEGRAM_API = "https://api.telegram.org"
 AI_API_URL = "https://cheak-pearl.vercel.app/api/ai"
 
 CONFIG = {
@@ -35,7 +33,6 @@ CONFIG = {
         "ai_enabled": False,
         "antilink": True,
         "antispam": True,
-        "welcome": True,
         "strict_mode": False,
         "max_warnings": 3
     }
@@ -49,16 +46,13 @@ PATTERNS = {
     ],
     "RTL": re.compile(r"[\u0600-\u06FF\u200E\u200F\u202A-\u202E]"),
     "URL": re.compile(r"(https?:\/\/|t\.me\/|telegram\.me\/|www\.)", re.I),
-    "BAD_STICKERS": {"nsfw","porn","sex","xxx","18+","ahegao"}
 }
 
 # =========================================================
-# BOT INIT
+# DATABASE
 # =========================================================
 
-
-
-mongo = AsyncIOMotorClient("MONGO_DB_URI")
+mongo = AsyncIOMotorClient(MONGO_DB_URI)
 db = mongo.aegisguard
 
 settings_db = db.settings
@@ -67,54 +61,56 @@ flood_db = db.flood
 admin_cache = db.admin_cache
 
 # =========================================================
-# UTILITIES (EXACT LOGIC)
+# HELPERS
 # =========================================================
 
 def normalize_text(text: str) -> str:
     return re.sub(r"[^a-z0-9]", "", text.lower())
 
-async def get_settings(chat_id):
+async def get_settings(chat_id: int):
     data = await settings_db.find_one({"_id": chat_id})
     return {**CONFIG["DEFAULT_SETTINGS"], **(data or {})}
 
-async def save_settings(chat_id, data):
+async def save_settings(chat_id: int, data: dict):
     await settings_db.update_one(
         {"_id": chat_id},
         {"$set": data},
         upsert=True
     )
 
-async def fetch_is_admin(chat_id, user_id):
+async def is_admin(chat_id: int, user_id: int) -> bool:
     try:
-        m = await app.get_chat_member(chat_id, user_id)
-        return m.status in ("administrator", "creator")
+        member = await app.get_chat_member(chat_id, user_id)
+        return member.status in ("administrator", "creator")
     except:
         return False
 
-async def check_admin_cached(chat_id, user_id):
+async def check_admin_cached(chat_id: int, user_id: int) -> bool:
     key = f"{chat_id}:{user_id}"
-    cached = await admin_cache.find_one({"_id": key})
+    now = time.time()
 
-    if cached and time.time() - cached["ts"] < CONFIG["CACHE_TTL"]:
-        return cached["admin"]
+    data = await admin_cache.find_one({"_id": key})
+    if data and now - data["ts"] < CONFIG["CACHE_TTL"]:
+        return data["admin"]
 
-    is_admin = await fetch_is_admin(chat_id, user_id)
+    admin = await is_admin(chat_id, user_id)
     await admin_cache.update_one(
         {"_id": key},
-        {"$set": {"admin": is_admin, "ts": time.time()}},
+        {"$set": {"admin": admin, "ts": now}},
         upsert=True
     )
-    return is_admin
+    return admin
 
 # =========================================================
-# FLOOD PROTECTION
+# FLOOD
 # =========================================================
 
-async def check_flood(chat_id, user_id):
+async def check_flood(chat_id: int, user_id: int) -> bool:
     key = f"{chat_id}:{user_id}"
     now = time.time()
 
     data = await flood_db.find_one({"_id": key})
+
     if not data or now - data["ts"] > CONFIG["FLOOD_WINDOW"]:
         await flood_db.update_one(
             {"_id": key},
@@ -136,23 +132,21 @@ async def check_flood(chat_id, user_id):
 # AI CHECK
 # =========================================================
 
-async def check_ai(text):
+async def check_ai(text: str) -> bool:
     try:
+        prompt = quote(f"Classify as SAFE or UNSAFE (porn/nsfw): {text}")
         async with aiohttp.ClientSession() as s:
-            async with s.get(
-                f"{AI_API_URL}?prompt=Classify as SAFE or UNSAFE (porn/nsfw): {text}",
-                timeout=2
-            ) as r:
+            async with s.get(f"{AI_API_URL}?prompt={prompt}", timeout=3) as r:
                 res = (await r.text()).upper()
                 return "UNSAFE" in res or "PORN" in res
     except:
         return False
 
 # =========================================================
-# PUNISHMENT SYSTEM
+# PUNISHMENT
 # =========================================================
 
-async def handle_punishment(chat_id, user, reason, settings):
+async def punish(chat_id: int, user, reason: str, settings: dict):
     key = f"{chat_id}:{user.id}"
     data = await warn_db.find_one({"_id": key})
     count = (data["count"] if data else 0) + 1
@@ -160,7 +154,7 @@ async def handle_punishment(chat_id, user, reason, settings):
     if count >= settings["max_warnings"]:
         if settings["strict_mode"]:
             await app.ban_chat_member(chat_id, user.id)
-            text = f"🚫 **Banned** {user.mention}\nReason: Max warnings"
+            text = f"🚫 **Banned** {user.mention}\nReason: {reason}"
         else:
             await app.restrict_chat_member(
                 chat_id,
@@ -182,10 +176,13 @@ async def handle_punishment(chat_id, user, reason, settings):
     await app.send_message(chat_id, text)
 
 # =========================================================
-# PROTECTION ENGINE (BRAIN)
+# PROTECTION
 # =========================================================
 
-async def protect_group(msg: Message):
+async def protect(msg: Message):
+    if not msg.from_user:
+        return
+
     chat_id = msg.chat.id
     user = msg.from_user
     settings = await get_settings(chat_id)
@@ -193,8 +190,8 @@ async def protect_group(msg: Message):
     if not settings["enabled"]:
         return
 
-    raw_text = msg.text or msg.caption or ""
-    clean_text = normalize_text(raw_text)
+    text = msg.text or msg.caption or ""
+    clean = normalize_text(text)
     violation = None
 
     if settings["antispam"]:
@@ -206,44 +203,33 @@ async def protect_group(msg: Message):
                 ChatPermissions(can_send_messages=False),
                 until_date=int(time.time()) + 300
             )
-            await app.send_message(chat_id, f"⚡ Anti-Flood muted {user.mention}")
             return
 
-    if settings["antilink"] and PATTERNS["URL"].search(raw_text):
-        violation = "Link Detected"
+    if settings["antilink"] and PATTERNS["URL"].search(text):
+        violation = "Link detected"
 
     if not violation:
         for w in PATTERNS["NSFW_KEYWORDS"]:
-            if w in clean_text:
-                violation = f"Profanity ({w})"
+            if w in clean:
+                violation = f"NSFW word: {w}"
                 break
 
-    if not violation and PATTERNS["RTL"].search(raw_text):
-        violation = "Forbidden RTL Characters"
+    if not violation and PATTERNS["RTL"].search(text):
+        violation = "RTL characters"
 
-    if not violation and settings["ai_enabled"] and len(clean_text) > 8:
-        if await check_ai(raw_text):
-            violation = "AI Detection"
+    if not violation and settings["ai_enabled"] and len(clean) > 8:
+        if await check_ai(text):
+            violation = "AI unsafe text"
 
     if violation:
         await msg.delete()
-        await handle_punishment(chat_id, user, violation, settings)
+        await punish(chat_id, user, violation, settings)
 
 # =========================================================
 # COMMANDS
 # =========================================================
 
-@app.on_message(filters.private & filters.command(["start", "help"]))
-async def start(_, msg):
-    await msg.reply_text(
-        "🛡️ **AegisGuard Titan**\n\n"
-        "Add me to group and promote to admin.\n"
-        "Use /settings in group."
-    )
 
-@app.on_message(filters.group & filters.command("id"))
-async def get_id(_, msg):
-    await msg.reply_text(f"🆔 Chat: `{msg.chat.id}`\n👤 You: `{msg.from_user.id}`")
 
 @app.on_message(filters.group & filters.command("settings"))
 async def settings_cmd(_, msg):
@@ -251,22 +237,16 @@ async def settings_cmd(_, msg):
         return
 
     s = await get_settings(msg.chat.id)
-    kb = [
-        [InlineKeyboardButton(f"🛡️ Protection: {s['enabled']}", "t_on")],
-        [
-            InlineKeyboardButton(f"🔗 Anti-Link: {s['antilink']}", "t_link"),
-            InlineKeyboardButton(f"🧠 AI: {s['ai_enabled']}", "t_ai")
-        ],
-        [
-            InlineKeyboardButton(f"⚡ Spam: {s['antispam']}", "t_spam"),
-            InlineKeyboardButton(f"🚨 Strict: {s['strict_mode']}", "t_strict")
-        ],
-        [InlineKeyboardButton("❌ Close", "close")]
-    ]
-
     await msg.reply_text(
-        "⚙️ **AegisGuard Config**",
-        reply_markup=InlineKeyboardMarkup(kb)
+        "⚙️ **AegisGuard Settings**",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(f"🛡️ Protection: {s['enabled']}", "t_on")],
+            [InlineKeyboardButton(f"🔗 Anti-Link: {s['antilink']}", "t_link")],
+            [InlineKeyboardButton(f"🧠 AI: {s['ai_enabled']}", "t_ai")],
+            [InlineKeyboardButton(f"⚡ Spam: {s['antispam']}", "t_spam")],
+            [InlineKeyboardButton(f"🚨 Strict: {s['strict_mode']}", "t_strict")],
+            [InlineKeyboardButton("❌ Close", "close")]
+        ])
     )
 
 # =========================================================
@@ -283,8 +263,7 @@ async def callbacks(_, q: CallbackQuery):
     s = await get_settings(chat_id)
 
     if q.data == "close":
-        await q.message.delete()
-        return
+        return await q.message.delete()
 
     if q.data == "t_on": s["enabled"] = not s["enabled"]
     if q.data == "t_link": s["antilink"] = not s["antilink"]
@@ -293,14 +272,8 @@ async def callbacks(_, q: CallbackQuery):
     if q.data == "t_strict": s["strict_mode"] = not s["strict_mode"]
 
     await save_settings(chat_id, s)
-
     await q.answer("Updated ✅")
-    await q.message.edit_reply_markup(
-        InlineKeyboardMarkup([
-            [InlineKeyboardButton(f"🛡️ Protection: {s['enabled']}", "t_on")],
-            [InlineKeyboardButton("❌ Close", "close")]
-        ])
-    )
+    await q.message.edit_text("⚙️ **Settings Updated**", reply_markup=q.message.reply_markup)
 
 # =========================================================
 # WATCHER
@@ -308,7 +281,10 @@ async def callbacks(_, q: CallbackQuery):
 
 @app.on_message(filters.group & ~filters.service)
 async def watcher(_, msg: Message):
+    if not msg.from_user:
+        return
+
     if await check_admin_cached(msg.chat.id, msg.from_user.id):
         return
-    await protect_group(msg)
 
+    await protect(msg)
