@@ -58,7 +58,7 @@ PATTERNS = {
 
 
 
-mongo = AsyncIOMotorClient("MONGO_URI")
+mongo = AsyncIOMotorClient("MONGO_DB_URI")
 db = mongo.aegisguard
 
 settings_db = db.settings
