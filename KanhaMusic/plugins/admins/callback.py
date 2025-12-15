@@ -45,15 +45,12 @@ async def support_menu_callback(client, CallbackQuery, _):
     except:
         pass
 
-@app.on_callback_query(filters.regex("^settings_back_helper$") & ~BANNED_USERS)
+@app.on_callback_query(filters.regex("^back_to_home$") & ~BANNED_USERS)
 @languageCB
 async def back_to_home_callback(client, CallbackQuery, _):
-    try:
-        await CallbackQuery.edit_message_reply_markup(
-            InlineKeyboardMarkup(start_panel(_))
-        )
-    except:
-        pass
+    await CallbackQuery.edit_message_reply_markup(
+        InlineKeyboardMarkup(start_panel(_))
+    )
 
 @app.on_callback_query(filters.regex("ADMIN") & ~BANNED_USERS)
 @languageCB
