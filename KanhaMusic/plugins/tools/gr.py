@@ -102,7 +102,7 @@ async def check_admin_cached(chat_id: int, user_id: int) -> bool:
     return admin
 
 # =========================================================
-# FLOOD
+# FLOOD CONTROL
 # =========================================================
 
 async def check_flood(chat_id: int, user_id: int) -> bool:
@@ -136,14 +136,17 @@ async def check_ai(text: str) -> bool:
     try:
         prompt = quote(f"Classify as SAFE or UNSAFE (porn/nsfw): {text}")
         async with aiohttp.ClientSession() as s:
-            async with s.get(f"{AI_API_URL}?prompt={prompt}", timeout=3) as r:
+            async with s.get(
+                f"{AI_API_URL}?prompt={prompt}",
+                timeout=aiohttp.ClientTimeout(total=3)
+            ) as r:
                 res = (await r.text()).upper()
                 return "UNSAFE" in res or "PORN" in res
     except:
         return False
 
 # =========================================================
-# PUNISHMENT
+# PUNISH SYSTEM
 # =========================================================
 
 async def punish(chat_id: int, user, reason: str, settings: dict):
@@ -176,7 +179,7 @@ async def punish(chat_id: int, user, reason: str, settings: dict):
     await app.send_message(chat_id, text)
 
 # =========================================================
-# PROTECTION
+# MAIN PROTECTION
 # =========================================================
 
 async def protect(msg: Message):
@@ -194,6 +197,7 @@ async def protect(msg: Message):
     clean = normalize_text(text)
     violation = None
 
+    # Flood
     if settings["antispam"]:
         if await check_flood(chat_id, user.id):
             await msg.delete()
@@ -205,75 +209,102 @@ async def protect(msg: Message):
             )
             return
 
+    # Link
     if settings["antilink"] and PATTERNS["URL"].search(text):
         violation = "Link detected"
 
+    # NSFW words
     if not violation:
         for w in PATTERNS["NSFW_KEYWORDS"]:
             if w in clean:
                 violation = f"NSFW word: {w}"
                 break
 
+    # RTL
     if not violation and PATTERNS["RTL"].search(text):
         violation = "RTL characters"
 
+    # AI scan
     if not violation and settings["ai_enabled"] and len(clean) > 8:
         if await check_ai(text):
-            violation = "AI unsafe text"
+            violation = "AI unsafe content"
 
     if violation:
         await msg.delete()
         await punish(chat_id, user, violation, settings)
 
 # =========================================================
-# COMMANDS
+# SETTINGS COMMAND
 # =========================================================
 
-
-
 @app.on_message(filters.group & filters.command("gpset"))
-async def settings_cmd(_, msg):
+async def settings_cmd(_, msg: Message):
     if not await check_admin_cached(msg.chat.id, msg.from_user.id):
-        return
+        return await msg.reply_text("❌ Admin only")
 
     s = await get_settings(msg.chat.id)
+
     await msg.reply_text(
         "⚙️ **AegisGuard Settings**",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(f"🛡️ Protection: {s['enabled']}", "t_on")],
-            [InlineKeyboardButton(f"🔗 Anti-Link: {s['antilink']}", "t_link")],
-            [InlineKeyboardButton(f"🧠 AI: {s['ai_enabled']}", "t_ai")],
-            [InlineKeyboardButton(f"⚡ Spam: {s['antispam']}", "t_spam")],
-            [InlineKeyboardButton(f"🚨 Strict: {s['strict_mode']}", "t_strict")],
-            [InlineKeyboardButton("❌ Close", "close")]
+            [InlineKeyboardButton(
+                f"🛡️ Protection: {'ON' if s['enabled'] else 'OFF'}",
+                callback_data="t_on"
+            )],
+            [InlineKeyboardButton(
+                f"🔗 Anti-Link: {'ON' if s['antilink'] else 'OFF'}",
+                callback_data="t_link"
+            )],
+            [InlineKeyboardButton(
+                f"🧠 AI: {'ON' if s['ai_enabled'] else 'OFF'}",
+                callback_data="t_ai"
+            )],
+            [InlineKeyboardButton(
+                f"⚡ Spam: {'ON' if s['antispam'] else 'OFF'}",
+                callback_data="t_spam"
+            )],
+            [InlineKeyboardButton(
+                f"🚨 Strict: {'ON' if s['strict_mode'] else 'OFF'}",
+                callback_data="t_strict"
+            )],
+            [InlineKeyboardButton("❌ Close", callback_data="close")]
         ])
     )
 
 # =========================================================
-# CALLBACKS
+# CALLBACK HANDLER
 # =========================================================
 
-@app.on_callback_query()
+@app.on_callback_query(filters.regex("^t_|^close$"))
 async def callbacks(_, q: CallbackQuery):
     chat_id = q.message.chat.id
 
     if not await check_admin_cached(chat_id, q.from_user.id):
-        return
+        return await q.answer("Admin only ❌", show_alert=True)
 
     s = await get_settings(chat_id)
 
     if q.data == "close":
         return await q.message.delete()
 
-    if q.data == "t_on": s["enabled"] = not s["enabled"]
-    if q.data == "t_link": s["antilink"] = not s["antilink"]
-    if q.data == "t_ai": s["ai_enabled"] = not s["ai_enabled"]
-    if q.data == "t_spam": s["antispam"] = not s["antispam"]
-    if q.data == "t_strict": s["strict_mode"] = not s["strict_mode"]
+    if q.data == "t_on":
+        s["enabled"] = not s["enabled"]
+    elif q.data == "t_link":
+        s["antilink"] = not s["antilink"]
+    elif q.data == "t_ai":
+        s["ai_enabled"] = not s["ai_enabled"]
+    elif q.data == "t_spam":
+        s["antispam"] = not s["antispam"]
+    elif q.data == "t_strict":
+        s["strict_mode"] = not s["strict_mode"]
 
     await save_settings(chat_id, s)
     await q.answer("Updated ✅")
-    await q.message.edit_text("⚙️ **Settings Updated**", reply_markup=q.message.reply_markup)
+
+    await q.message.edit_text(
+        "⚙️ **AegisGuard Settings**",
+        reply_markup=q.message.reply_markup
+    )
 
 # =========================================================
 # WATCHER
