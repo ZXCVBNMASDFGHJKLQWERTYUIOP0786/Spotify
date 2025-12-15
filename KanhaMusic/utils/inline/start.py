@@ -12,7 +12,7 @@ from KanhaMusic import app
 
 
 # ──────────────────────────────
-# START PANEL
+# START / HOME PANEL
 # ──────────────────────────────
 def start_panel(_):
     buttons = [
@@ -26,6 +26,12 @@ def start_panel(_):
             InlineKeyboardButton(
                 text=_["S_B_2"],  # Support
                 callback_data="support_menu",
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                text=_["S_B_4"],  # Help & Commands
+                callback_data="settings_back_helper",
             ),
         ],
     ]
@@ -51,7 +57,7 @@ def private_panel(_):
         ],
         [
             InlineKeyboardButton(
-                text=_["S_B_4"],  # Help & Commands / Back
+                text=_["S_B_4"],  # Help & Commands
                 callback_data="settings_back_helper",
             )
         ],
