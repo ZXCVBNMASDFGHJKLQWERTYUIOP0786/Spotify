@@ -22,7 +22,7 @@ from KanhaMusic.utils.database import (get_active_chats, get_lang,
 from KanhaMusic.utils.decorators.language import languageCB
 from KanhaMusic.utils.formatters import seconds_to_min
 from KanhaMusic.utils.inline import (close_markup, stream_markup,
-                                     stream_markup_timer)
+from KanhaMusic.utils.inline.start import support_panel                                    stream_markup_timer)
 from KanhaMusic.utils.stream.autoclear import auto_clean
 from KanhaMusic.utils.thumbnails import get_thumb
 from config import (BANNED_USERS, SOUNCLOUD_IMG_URL, STREAM_IMG_URL,
@@ -33,6 +33,12 @@ from strings import get_string
 checker = {}
 upvoters = {}
 
+@app.on_callback_query(filters.regex("^support_menu$") & ~BANNED_USERS)
+@languageCB
+async def support_menu_callback(client, CallbackQuery, _):
+    await CallbackQuery.edit_message_reply_markup(
+        InlineKeyboardMarkup(support_panel(_))
+    )
 
 @app.on_callback_query(filters.regex("ADMIN") & ~BANNED_USERS)
 @languageCB
