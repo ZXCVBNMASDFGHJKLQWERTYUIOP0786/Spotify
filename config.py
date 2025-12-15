@@ -88,14 +88,20 @@ autoclean = []
 confirmer = {}
 
 
+# --- EDITED SECTION STARTS ---
+# Yahan .split() lagaya hai taaki aap multiple links daal sakein (space dekar)
 START_IMG_URL = getenv(
     "START_IMG_URL",
-    "https://files.catbox.moe/f2j9aq.jpg",
-)
+    "https://te.legra.ph/file/72225679c177dc51df71b.jpg https://te.legra.ph/file/6298d377ad3eb46711644.jpg",
+).split()
+
+# Agar PING_IMG_URL ke saath bhi same issue aaye, toh iska link bhi change kar dena
 PING_IMG_URL = getenv(
     "PING_IMG_URL",
-    "https://files.catbox.moe/jz8t1t.jpg",
+    "https://te.legra.ph/file/6298d377ad3eb46711644.jpg",
 )
+# --- EDITED SECTION ENDS ---
+
 PLAYLIST_IMG_URL = "https://files.catbox.moe/g93ojn.jpg"
 STATS_IMG_URL = "https://files.catbox.moe/g93ojn.jpg"
 TELEGRAM_AUDIO_URL = "https://files.catbox.moe/g93ojn.jpg"
