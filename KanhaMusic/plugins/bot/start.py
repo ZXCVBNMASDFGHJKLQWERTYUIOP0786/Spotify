@@ -1,227 +1,136 @@
-import time
-import random
+#
+# Copyright (C) 2025-2026 by OyeKanhaa@Github, < https://github.com/OyeKanhaa >.
+#
+# This file is part of < https://github.com/OyeKanhaa/KanhaMusic > project,
+# and is released under the "GNU v3.0 License Agreement".
+# Please see < https://github.com/OyeKanhaa/KanhaMusic/blob/master/LICENSE >
+# All rights reserved.
 
+import re
+from os import getenv
+
+from dotenv import load_dotenv
 from pyrogram import filters
-from pyrogram.enums import ChatType
-from pyrogram.types import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
+
+load_dotenv()
+
+# Get this value from my.telegram.org/apps
+API_ID = int(getenv("API_ID"))
+API_HASH = getenv("API_HASH")
+
+# Get your token from @BotFather on Telegram.
+BOT_TOKEN = getenv("BOT_TOKEN")
+
+# Get your mongo url from cloud.mongodb.com
+MONGO_DB_URI = getenv("MONGO_DB_URI", None)
+
+DURATION_LIMIT_MIN = int(getenv("DURATION_LIMIT", 600))
+
+# Set this to true if you want post ads automatically
+ADS_MODE = getenv("ADS_MODE", None)
+
+# Chat id of a group for logging bot's activities
+LOGGER_ID = int(getenv("LOGGER_ID", None))
+
+# Get this value from @FallenxBot on Telegram by /id
+OWNER_ID = int(getenv("OWNER_ID", 7682307978))
+
+## Fill these variables if you're deploying on heroku.
+# Your heroku app name
+HEROKU_APP_NAME = getenv("HEROKU_APP_NAME")
+# Get it from http://dashboard.heroku.com/account
+HEROKU_API_KEY = getenv("HEROKU_API_KEY")
+
+UPSTREAM_REPO = getenv(
+    "UPSTREAM_REPO",
+    "https://github.com/ZXCVBNMASDFGHJKLQWERTYUIOP0786/Spotify",
+)
+UPSTREAM_BRANCH = getenv("UPSTREAM_BRANCH", "main")
+GIT_TOKEN = getenv(
+    "GIT_TOKEN", None
+)  # Fill this variable if your upstream repository is private
+
+SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/aboutkanha")
+SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/kanhasworld")
+
+# Set this to True if you want the assistant to automatically leave chats after an interval
+AUTO_LEAVING_ASSISTANT = bool(getenv("AUTO_LEAVING_ASSISTANT", None))
+
+
+# Get this credentials from https://developer.spotify.com/dashboard
+SPOTIFY_CLIENT_ID = getenv("SPOTIFY_CLIENT_ID", None)
+SPOTIFY_CLIENT_SECRET = getenv("SPOTIFY_CLIENT_SECRET", None)
+
+
+# Maximum limit for fetching playlist's track from youtube, spotify, apple links.
+PLAYLIST_FETCH_LIMIT = int(getenv("PLAYLIST_FETCH_LIMIT", 25))
+
+
+# Telegram audio and video file size limit (in bytes)
+TG_AUDIO_FILESIZE_LIMIT = int(getenv("TG_AUDIO_FILESIZE_LIMIT", 104857600))
+TG_VIDEO_FILESIZE_LIMIT = int(getenv("TG_VIDEO_FILESIZE_LIMIT", 1073741824))
+# Checkout https://www.gbmb.org/mb-to-bytes for converting mb to bytes
+
+
+# Get your pyrogram v2 session from @StringFatherBot on Telegram
+STRING1 = getenv("STRING_SESSION", None)
+STRING2 = getenv("STRING_SESSION2", None)
+STRING3 = getenv("STRING_SESSION3", None)
+STRING4 = getenv("STRING_SESSION4", None)
+STRING5 = getenv("STRING_SESSION5", None)
+
+
+BANNED_USERS = filters.user()
+adminlist = {}
+lyrical = {}
+votemode = {}
+autoclean = []
+confirmer = {}
+
+
+# --- UPDATED IMAGES SECTION (Fixed Links) ---
+
+# Start Command Images (Telegraph links)
+START_IMG_URL = getenv(
+    "START_IMG_URL",
+    "https://te.legra.ph/file/72225679c177dc51df71b.jpg https://te.legra.ph/file/6298d377ad3eb46711644.jpg",
+).split()
+
+# Ping Command Image
+PING_IMG_URL = getenv(
+    "PING_IMG_URL",
+    "https://te.legra.ph/file/6298d377ad3eb46711644.jpg",
 )
 
-from youtubesearchpython.__future__ import VideosSearch
-
-import config
-from KanhaMusic import app
-from KanhaMusic.plugins.sudo.sudoers import sudoers_list
-from KanhaMusic.utils.database import (
-    add_served_chat,
-    add_served_user,
-    blacklisted_chats,
-    get_lang,
-    is_banned_user,
-)
-from KanhaMusic.utils.decorators.language import LanguageStart
-from KanhaMusic.utils.formatters import get_readable_time
-from KanhaMusic.utils.inline import help_pannel, private_panel, start_panel
-from config import BANNED_USERS
-from strings import get_string
+# Other Hardcoded Images (Changed to reliable Telegraph link to prevent crash)
+PLAYLIST_IMG_URL = "https://te.legra.ph/file/4ec5ae4381dffb039b4ef.jpg"
+STATS_IMG_URL = "https://te.legra.ph/file/e906c2def5afe8a9b9120.jpg"
+TELEGRAM_AUDIO_URL = "https://te.legra.ph/file/6298d377ad3eb46711644.jpg"
+TELEGRAM_VIDEO_URL = "https://te.legra.ph/file/6298d377ad3eb46711644.jpg"
+STREAM_IMG_URL = "https://te.legra.ph/file/bd995b032b6bd263e2cc9.jpg"
+SOUNCLOUD_IMG_URL = "https://te.legra.ph/file/bb0ff85f2dd44070ea519.jpg"
+YOUTUBE_IMG_URL = "https://te.legra.ph/file/6298d377ad3eb46711644.jpg"
+SPOTIFY_ARTIST_IMG_URL = "https://te.legra.ph/file/37d163a2f75e0d3b403d6.jpg"
+SPOTIFY_ALBUM_IMG_URL = "https://te.legra.ph/file/b35fd1dfca73b950b1b05.jpg"
+SPOTIFY_PLAYLIST_IMG_URL = "https://te.legra.ph/file/95b3ca7993bbfaf993dcb.jpg"
 
 
-# ============================
-#        BOT BOOT TIME
-# ============================
-_boot_ = time.time()
-
-# ============================
-#        RANDOM REACTIONS
-# ============================
-START_REACTIONS = [
-    "🍓", "🔥", "🥰", "💖", "😁",
-    "😎", "🌚", "❤️‍🔥", "♥️", "🎉", "🙈"
-]
-
-# ============================
-#        IMAGE PICKER
-# ============================
-def get_start_image():
-    if isinstance(config.START_IMG_URL, list) and len(config.START_IMG_URL) > 0:
-        return random.choice(config.START_IMG_URL)
-    return "https://telegra.ph/file/72225679c177dc51df71b.jpg"
+def time_to_seconds(time):
+    stringt = str(time)
+    return sum(int(x) * 60**i for i, x in enumerate(reversed(stringt.split(":"))))
 
 
-# ============================
-#        START — PRIVATE
-# ============================
-@app.on_message(filters.command(["start"]) & filters.private & ~BANNED_USERS)
-@LanguageStart
-async def start_pm(client, message: Message, _):
-
-    # SAVE USER
-    await add_served_user(message.from_user.id)
-
-    # 🔥 RANDOM REACTION
-    try:
-        await message.react(random.choice(START_REACTIONS))
-    except Exception:
-        pass
-
-    # ---- START WITH PARAMETER ----
-    if len(message.text.split()) > 1:
-        name = message.text.split(None, 1)[1]
-
-        # HELP
-        if name.startswith("help"):
-            return await message.reply_photo(
-                photo=get_start_image(),
-                has_spoiler=True,
-                caption=_["help_1"].format(config.SUPPORT_CHAT),
-                reply_markup=help_pannel(_),
-            )
-
-        # SUDO
-        if name.startswith("sud"):
-            return await sudoers_list(client=client, message=message, _=_)
-
-        # YOUTUBE INFO
-        if name.startswith("inf"):
-            m = await message.reply_text("🔎")
-            query = name.replace("info_", "")
-            query_url = f"https://www.youtube.com/watch?v={query}"
-
-            results = VideosSearch(query_url, limit=1)
-            search_result = await results.next()
-
-            if not search_result.get("result"):
-                return await m.edit("❌ No results found.")
-
-            result = search_result["result"][0]
-
-            title = result.get("title", "N/A")
-            duration = result.get("duration", "N/A")
-            views = result.get("viewCount", {}).get("short", "N/A")
-            published = result.get("publishedTime", "N/A")
-            link = result.get("link")
-            channel = result["channel"]["name"]
-            channellink = result["channel"]["link"]
-
-            thumbnail = result["thumbnails"][-1]["url"]
-            if not thumbnail.endswith(("jpg", "png", "webp")):
-                thumbnail = None
-
-            caption = _["start_6"].format(
-                title, duration, views, published, channellink, channel, app.mention
-            )
-
-            buttons = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(text=_["S_B_8"], url=link),
-                        InlineKeyboardButton(text=_["S_B_9"], url=config.SUPPORT_CHAT),
-                    ]
-                ]
-            )
-
-            await m.delete()
-
-            if thumbnail:
-                return await app.send_photo(
-                    message.chat.id,
-                    photo=thumbnail,
-                    caption=caption,
-                    reply_markup=buttons,
-                )
-
-            return await app.send_message(
-                message.chat.id,
-                caption,
-                reply_markup=buttons,
-            )
-
-    # ============================
-    #        NORMAL START
-    # ============================
-    await message.reply_photo(
-        photo=get_start_image(),
-        caption=_["start_2"].format(
-            message.from_user.mention,
-            app.mention,
-        ),
-        has_spoiler=True,
-        reply_markup=InlineKeyboardMarkup(private_panel(_)),
-    )
+DURATION_LIMIT = int(time_to_seconds(f"{DURATION_LIMIT_MIN}:00"))
 
 
-# ============================
-#        START — GROUP
-# ============================
-@app.on_message(filters.command(["start"]) & filters.group & ~BANNED_USERS)
-@LanguageStart
-async def start_gp(client, message: Message, _):
+if SUPPORT_CHANNEL:
+    if not re.match("(?:http|https)://", SUPPORT_CHANNEL):
+        raise SystemExit(
+            "[ERROR] - Your SUPPORT_CHANNEL url is wrong. Please ensure that it starts with https://"
+        )
 
-    uptime = int(time.time() - _boot_)
-
-    await message.reply_photo(
-        photo=get_start_image(),
-        has_spoiler=True,
-        caption=_["start_1"].format(
-            app.mention,
-            get_readable_time(uptime),
-        ),
-        reply_markup=InlineKeyboardMarkup(start_panel(_)),
-    )
-
-    await add_served_chat(message.chat.id)
-
-
-# ============================
-#        WELCOME
-# ============================
-@app.on_message(filters.new_chat_members, group=-1)
-async def welcome(client, message: Message):
-
-    for member in message.new_chat_members:
-        try:
-            language = await get_lang(message.chat.id)
-            _ = get_string(language)
-
-            if await is_banned_user(member.id):
-                try:
-                    await message.chat.ban_member(member.id)
-                except Exception:
-                    pass
-
-            if member.id == app.id:
-
-                if message.chat.type != ChatType.SUPERGROUP:
-                    await message.reply_text(_["start_4"])
-                    return await app.leave_chat(message.chat.id)
-
-                if message.chat.id in await blacklisted_chats():
-                    await message.reply_text(
-                        _["start_5"].format(
-                            app.mention,
-                            f"https://t.me/{app.username}?start=sudolist",
-                            config.SUPPORT_CHAT,
-                        ),
-                        disable_web_page_preview=True,
-                    )
-                    return await app.leave_chat(message.chat.id)
-
-                await message.reply_photo(
-                    photo=get_start_image(),
-                    has_spoiler=True,
-                    caption=_["start_3"].format(
-                        message.from_user.mention,
-                        app.mention,
-                        message.chat.title,
-                        app.mention,
-                    ),
-                    reply_markup=InlineKeyboardMarkup(start_panel(_)),
-                )
-
-                await add_served_chat(message.chat.id)
-                await message.stop_propagation()
-
-        except Exception as e:
-            print(e)
+if SUPPORT_CHAT:
+    if not re.match("(?:http|https)://", SUPPORT_CHAT):
+        raise SystemExit(
+            "[ERROR] - Your SUPPORT_CHAT url is wrong. Please ensure that it starts with https://"
+        )
