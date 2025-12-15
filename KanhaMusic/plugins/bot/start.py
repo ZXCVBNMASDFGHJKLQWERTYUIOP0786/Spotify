@@ -1,10 +1,10 @@
-import time, asyncio
+import time
+import asyncio
 import random
 
-from pyrogram.types import InputMediaPhoto
 from pyrogram import filters
 from pyrogram.enums import ChatType
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.types import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from youtubesearchpython.__future__ import VideosSearch
 
 import config
@@ -30,28 +30,12 @@ from strings import get_string
 _boot_ = time.time()
 
 
-
-
 NEXIO = [
     "https://files.catbox.moe/wy1exf.jpg",
     "https://files.catbox.moe/hdo3d0.jpg",
     "https://files.catbox.moe/pf0ouq.jpg",
     "https://files.catbox.moe/hsmyvi.jpg",
     "https://files.catbox.moe/whnfs1.jpg",
-]
-
-# Stickers
-PURVI_STKR = [
-    "CAACAgUAAxkBAAKOmmkz-ntJaFPXb0carGSNRtKHl69sAAL7HQACNIWhVdDyUdqb8yMtHgQ",
-    "CAACAgUAAxkBAAKOm2kz-nsnFNG9zS0eyjaE9mEriTN2AAKLHQACXmKhVWRYc-mThaGHHgQ",
-    "CAACAgUAAxkBAAKOnGkz-ny89GKzIC8y38Gqdg_ujQg4AAIkHAAChPKgVcjV8fUfimNGHgQ",
-    "CAACAgUAAxkBAAKOnWkz-nz5cZGEYLoWfp7QZgIbf9HbAAIRHQAC_jOgVdqhnaopN_EJHgQ", 
-    "CAACAgUAAxkBAAKOnmkz-n013B233W24UyE4KiAtEbRlAAKAGwAC0VOgVe_Z1cRSzI-sHgQ", 
-    "CAACAgUAAxkBAAKOn2kz-n2FSJi7MKC9q0Wy6T7CilM8AALTHAACvgABoFXBEMums5ywdR4E", 
-    "CAACAgUAAxkBAAKOoGkz-n7ENOqTjvLOaCZFSkOZLiYCAAJaGwACWXKgVaxKbq4HeZ4MHgQ",
-    "CAACAgUAAxkBAAKOoWkz-n7JfmZjgzI7n5srNEY_bkyGAAINGgACbpigVSc4KH8aMEshHgQ", 
-    "CAACAgUAAxkBAAKOomkz-n-62srSaAOYMPKLHPevi8FBAAJvHAACcwmgVbva9WxHwDJIHgQ", 
-    "CAACAgUAAxkBAAKOo2kz-oBmaCHZ96BNQafgepRINZKYAAKjGwACeZmgVSPTNWP_M9WLHgQ", 
 ]
 
 # Effect IDs
@@ -82,11 +66,6 @@ async def start_pm(client, message: Message, _):
     except:
         pass
 
-    # Sticker animation
-    sticker = await message.reply_sticker(random.choice(PURVI_STKR))
-    await asyncio.sleep(1)
-    await sticker.delete()
-
     # ---- START WITH PARAMETER ----
     if len(message.text.split()) > 1:
         name = message.text.split(None, 1)[1]
@@ -95,7 +74,6 @@ async def start_pm(client, message: Message, _):
             return await message.reply_photo(
                 random.choice(NEXIO),
                 has_spoiler=True,
-                message_effect_id=random.choice(EFFECT_IDS),
                 caption=_["help_1"].format(config.SUPPORT_CHAT),
                 reply_markup=help_pannel(_),
             )
@@ -106,18 +84,24 @@ async def start_pm(client, message: Message, _):
         if name.startswith("inf"):
             m = await message.reply_text("🔎")
             query = name.replace("info_", "")
-            query = f"https://www.youtube.com/watch?v={query}"
+            query_url = f"https://www.youtube.com/watch?v={query}"
 
-            results = VideosSearch(query, limit=1)
-            for result in (await results.next())["result"]:
-                title = result["title"]
-                duration = result["duration"]
-                views = result["viewCount"]["short"]
-                thumbnail = result["thumbnails"][0]["url"].split("?")[0]
-                channellink = result["channel"]["link"]
-                channel = result["channel"]["name"]
-                link = result["link"]
-                published = result["publishedTime"]
+            results = VideosSearch(query_url, limit=1)
+            search_result = await results.next()
+
+            if not search_result["result"]:
+                await m.edit("❌ No results found.")
+                return
+
+            result = search_result["result"][0]
+            title = result["title"]
+            duration = result["duration"]
+            views = result.get("viewCount", {}).get("short", "N/A")
+            thumbnail = result["thumbnails"][0]["url"].split("?")[0]
+            channellink = result["channel"]["link"]
+            channel = result["channel"]["name"]
+            link = result["link"]
+            published = result.get("publishedTime", "N/A")
 
             searched_text = _["start_6"].format(
                 title, duration, views, published, channellink, channel, app.mention
@@ -138,42 +122,24 @@ async def start_pm(client, message: Message, _):
                 photo=thumbnail,
                 has_spoiler=True,
                 caption=searched_text,
-                message_effect_id=random.choice(EFFECT_IDS),
                 reply_markup=key,
             )
 
     # ============================
     #  START NORMAL (NO PARAMETER)
     # ============================
-
-    # 1️⃣ First ONLY TEXT
-    msg = await message.reply_text(
-        f"<b>ʜᴇʏ ʙᴧʙʏ {message.from_user.mention}</b>"
-    )
-
-    await asyncio.sleep(0.5)
-
-    # 2️⃣ Edit text
-    await msg.edit_text(
-        "<b>ɪ ᴧᴍ ʏᴏᴜʀ ᴍᴜsɪᴄ ʙᴏᴛ..🦋</b>"
-    )
-
-    await asyncio.sleep(0.5)
-
-    # 3️⃣ FINAL → TEXT ➜ IMAGE + INLINE
-    await msg.edit_media(
-        media=InputMediaPhoto(
-            media=random.choice(NEXIO),
-            caption=_["start_2"].format(
-                message.from_user.mention,
-                app.mention
-            ),
-            has_spoiler=True,
+    
+    # Direct Photo Send (Text animation removed)
+    await message.reply_photo(
+        photo=random.choice(NEXIO),
+        caption=_["start_2"].format(
+            message.from_user.mention,
+            app.mention
         ),
-        reply_markup=InlineKeyboardMarkup(
-            private_panel(_)
-        )
+        has_spoiler=True,
+        reply_markup=InlineKeyboardMarkup(private_panel(_))
     )
+
 
 # ============================
 #        START — GROUP
@@ -212,12 +178,14 @@ async def welcome(client, message: Message):
             language = await get_lang(message.chat.id)
             _ = get_string(language)
 
+            # Ban check
             if await is_banned_user(member.id):
                 try:
                     await message.chat.ban_member(member.id)
                 except:
                     pass
 
+            # If Bot is added
             if member.id == app.id:
 
                 if message.chat.type != ChatType.SUPERGROUP:
