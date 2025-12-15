@@ -14,6 +14,11 @@ from pyrogram.types import (
 )
 from motor.motor_asyncio import AsyncIOMotorClient
 
+
+from KanhaMusic import app
+from config 
+
+
 # =========================================================
 # CONFIG
 # =========================================================
