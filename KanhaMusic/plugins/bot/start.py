@@ -1,10 +1,14 @@
 import time
-import asyncio
 import random
 
 from pyrogram import filters
 from pyrogram.enums import ChatType
-from pyrogram.types import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
+
 from youtubesearchpython.__future__ import VideosSearch
 
 import config
@@ -29,22 +33,26 @@ from strings import get_string
 # ============================
 _boot_ = time.time()
 
-
-# Effect IDs
-EFFECT_IDS = [
-    5046509860389126442,
-    5107584321108051014,
-    5104841245755180586,
-    5159385139981059251,
+# ============================
+#        RANDOM REACTIONS
+# ============================
+START_REACTIONS = [
+    "🍓", "🔥", "🥰", "💖", "😁",
+    "😎", "🌚", "❤️‍🔥", "♥️", "🎉", "🙈"
 ]
 
-emojis = ["🥰", "🔥", "💖", "😁", "😎", "🌚", "❤️‍🔥", "♥️", "🎉", "🙈"]
+# ============================
+#        IMAGE PICKER
+# ============================
+def get_start_image():
+    if isinstance(config.START_IMG_URL, list) and len(config.START_IMG_URL) > 0:
+        return random.choice(config.START_IMG_URL)
+    return "https://telegra.ph/file/72225679c177dc51df71b.jpg"
 
 
 # ============================
 #        START — PRIVATE
 # ============================
-
 @app.on_message(filters.command(["start"]) & filters.private & ~BANNED_USERS)
 @LanguageStart
 async def start_pm(client, message: Message, _):
@@ -52,27 +60,30 @@ async def start_pm(client, message: Message, _):
     # SAVE USER
     await add_served_user(message.from_user.id)
 
-    # Reaction
+    # 🔥 RANDOM REACTION
     try:
-        await message.react(random.choice(emojis))
-    except:
+        await message.react(random.choice(START_REACTIONS))
+    except Exception:
         pass
 
     # ---- START WITH PARAMETER ----
     if len(message.text.split()) > 1:
         name = message.text.split(None, 1)[1]
 
+        # HELP
         if name.startswith("help"):
             return await message.reply_photo(
-                photo=random.choice(config.START_IMG_URL),
+                photo=get_start_image(),
                 has_spoiler=True,
                 caption=_["help_1"].format(config.SUPPORT_CHAT),
                 reply_markup=help_pannel(_),
             )
 
+        # SUDO
         if name.startswith("sud"):
             return await sudoers_list(client=client, message=message, _=_)
 
+        # YOUTUBE INFO
         if name.startswith("inf"):
             m = await message.reply_text("🔎")
             query = name.replace("info_", "")
@@ -81,25 +92,28 @@ async def start_pm(client, message: Message, _):
             results = VideosSearch(query_url, limit=1)
             search_result = await results.next()
 
-            if not search_result["result"]:
-                await m.edit("❌ No results found.")
-                return
+            if not search_result.get("result"):
+                return await m.edit("❌ No results found.")
 
             result = search_result["result"][0]
-            title = result["title"]
-            duration = result["duration"]
-            views = result.get("viewCount", {}).get("short", "N/A")
-            thumbnail = result["thumbnails"][0]["url"].split("?")[0]
-            channellink = result["channel"]["link"]
-            channel = result["channel"]["name"]
-            link = result["link"]
-            published = result.get("publishedTime", "N/A")
 
-            searched_text = _["start_6"].format(
+            title = result.get("title", "N/A")
+            duration = result.get("duration", "N/A")
+            views = result.get("viewCount", {}).get("short", "N/A")
+            published = result.get("publishedTime", "N/A")
+            link = result.get("link")
+            channel = result["channel"]["name"]
+            channellink = result["channel"]["link"]
+
+            thumbnail = result["thumbnails"][-1]["url"]
+            if not thumbnail.endswith(("jpg", "png", "webp")):
+                thumbnail = None
+
+            caption = _["start_6"].format(
                 title, duration, views, published, channellink, channel, app.mention
             )
 
-            key = InlineKeyboardMarkup(
+            buttons = InlineKeyboardMarkup(
                 [
                     [
                         InlineKeyboardButton(text=_["S_B_8"], url=link),
@@ -109,70 +123,60 @@ async def start_pm(client, message: Message, _):
             )
 
             await m.delete()
-            return await app.send_photo(
+
+            if thumbnail:
+                return await app.send_photo(
+                    message.chat.id,
+                    photo=thumbnail,
+                    caption=caption,
+                    reply_markup=buttons,
+                )
+
+            return await app.send_message(
                 message.chat.id,
-                photo=thumbnail,
-                has_spoiler=True,
-                caption=searched_text,
-                reply_markup=key,
+                caption,
+                reply_markup=buttons,
             )
 
     # ============================
-    #  START NORMAL (NO PARAMETER)
+    #        NORMAL START
     # ============================
-    
-    # Direct Photo Send using Config Variable
-    if config.START_IMG_URL:
-        photo_url = random.choice(config.START_IMG_URL)
-    else:
-        # Fallback agar config khali ho
-        photo_url = "https://te.legra.ph/file/72225679c177dc51df71b.jpg"
-
     await message.reply_photo(
-        photo=photo_url,
+        photo=get_start_image(),
         caption=_["start_2"].format(
             message.from_user.mention,
-            app.mention
+            app.mention,
         ),
         has_spoiler=True,
-        reply_markup=InlineKeyboardMarkup(private_panel(_))
+        reply_markup=InlineKeyboardMarkup(private_panel(_)),
     )
 
 
 # ============================
 #        START — GROUP
 # ============================
-
 @app.on_message(filters.command(["start"]) & filters.group & ~BANNED_USERS)
 @LanguageStart
 async def start_gp(client, message: Message, _):
 
     uptime = int(time.time() - _boot_)
-    
-    if config.START_IMG_URL:
-        photo_url = random.choice(config.START_IMG_URL)
-    else:
-        photo_url = "https://te.legra.ph/file/72225679c177dc51df71b.jpg"
 
     await message.reply_photo(
-        photo=photo_url,
+        photo=get_start_image(),
         has_spoiler=True,
         caption=_["start_1"].format(
             app.mention,
             get_readable_time(uptime),
         ),
-        reply_markup=InlineKeyboardMarkup(
-            start_panel(_)
-        ),
+        reply_markup=InlineKeyboardMarkup(start_panel(_)),
     )
 
     await add_served_chat(message.chat.id)
 
 
 # ============================
-#          WELCOME
+#        WELCOME
 # ============================
-
 @app.on_message(filters.new_chat_members, group=-1)
 async def welcome(client, message: Message):
 
@@ -181,14 +185,12 @@ async def welcome(client, message: Message):
             language = await get_lang(message.chat.id)
             _ = get_string(language)
 
-            # Ban check
             if await is_banned_user(member.id):
                 try:
                     await message.chat.ban_member(member.id)
-                except:
+                except Exception:
                     pass
 
-            # If Bot is added
             if member.id == app.id:
 
                 if message.chat.type != ChatType.SUPERGROUP:
@@ -205,14 +207,9 @@ async def welcome(client, message: Message):
                         disable_web_page_preview=True,
                     )
                     return await app.leave_chat(message.chat.id)
-                
-                if config.START_IMG_URL:
-                    photo_url = random.choice(config.START_IMG_URL)
-                else:
-                    photo_url = "https://te.legra.ph/file/72225679c177dc51df71b.jpg"
 
                 await message.reply_photo(
-                    photo=photo_url,
+                    photo=get_start_image(),
                     has_spoiler=True,
                     caption=_["start_3"].format(
                         message.from_user.mention,
@@ -220,9 +217,7 @@ async def welcome(client, message: Message):
                         message.chat.title,
                         app.mention,
                     ),
-                    reply_markup=InlineKeyboardMarkup(
-                        start_panel(_)
-                    ),
+                    reply_markup=InlineKeyboardMarkup(start_panel(_)),
                 )
 
                 await add_served_chat(message.chat.id)
