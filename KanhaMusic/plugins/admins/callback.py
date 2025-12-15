@@ -21,10 +21,10 @@ from KanhaMusic.utils.database import (get_active_chats, get_lang,
                                        music_off, music_on, set_loop)
 from KanhaMusic.utils.decorators.language import languageCB
 from KanhaMusic.utils.formatters import seconds_to_min
-# --- FIX: Imports separated correctly ---
+# --- FIX: Imports cleaned up ---
 from KanhaMusic.utils.inline import (close_markup, stream_markup, stream_markup_timer)
-from KanhaMusic.utils.inline.start import support_panel                                    
-# ----------------------------------------
+from KanhaMusic.utils.inline.start import support_panel, start_panel
+# -------------------------------
 from KanhaMusic.utils.stream.autoclear import auto_clean
 from KanhaMusic.utils.thumbnails import get_thumb
 from config import (BANNED_USERS, SOUNCLOUD_IMG_URL, STREAM_IMG_URL,
@@ -38,9 +38,22 @@ upvoters = {}
 @app.on_callback_query(filters.regex("^support_menu$") & ~BANNED_USERS)
 @languageCB
 async def support_menu_callback(client, CallbackQuery, _):
-    await CallbackQuery.edit_message_reply_markup(
-        InlineKeyboardMarkup(support_panel(_))
-    )
+    try:
+        await CallbackQuery.edit_message_reply_markup(
+            InlineKeyboardMarkup(support_panel(_))
+        )
+    except:
+        pass
+
+@app.on_callback_query(filters.regex("^settings_back_helper$") & ~BANNED_USERS)
+@languageCB
+async def back_to_home_callback(client, CallbackQuery, _):
+    try:
+        await CallbackQuery.edit_message_reply_markup(
+            InlineKeyboardMarkup(start_panel(_))
+        )
+    except:
+        pass
 
 @app.on_callback_query(filters.regex("ADMIN") & ~BANNED_USERS)
 @languageCB
@@ -49,7 +62,6 @@ async def del_back_playlist(client, CallbackQuery, _):
     callback_request = callback_data.split(None, 1)[1]
     command, chat = callback_request.split("|")
     
-    # --- FIX: Initialize counter safely ---
     counter = None
     if "_" in str(chat):
         bet = chat.split("_")
@@ -96,10 +108,8 @@ async def del_back_playlist(client, CallbackQuery, _):
                 return await CallbackQuery.edit_message_text("ғᴀɪʟᴇᴅ.")
             try:
                 if current["vidid"] != exists["vidid"]:
-                    # --- FIX: edit_message.text -> edit_message_text ---
                     return await CallbackQuery.edit_message_text(_["admin_35"])
                 if current["file"] != exists["file"]:
-                    # --- FIX: edit_message.text -> edit_message_text ---
                     return await CallbackQuery.edit_message_text(_["admin_35"])
             except:
                 return await CallbackQuery.edit_message_text(_["admin_36"])
@@ -108,10 +118,8 @@ async def del_back_playlist(client, CallbackQuery, _):
             except:
                 pass
             
-            # --- FIX: Check if counter exists before assignment ---
             if counter:
                 command = counter
-                
             mention = "ᴜᴘᴠᴏᴛᴇs"
         else:
             if (
@@ -184,9 +192,12 @@ async def del_back_playlist(client, CallbackQuery, _):
                 if popped:
                     await auto_clean(popped)
                 if not check:
-                    await CallbackQuery.edit_message_text(
-                        f"➻ sᴛʀᴇᴀᴍ sᴋɪᴩᴩᴇᴅ 🎄\n│ \n└ʙʏ : {mention} 🥀"
-                    )
+                    try:
+                        await CallbackQuery.edit_message_text(
+                            f"➻ sᴛʀᴇᴀᴍ sᴋɪᴩᴩᴇᴅ 🎄\n│ \n└ʙʏ : {mention} 🥀"
+                        )
+                    except:
+                        pass
                     await CallbackQuery.message.reply_text(
                         text=_["admin_6"].format(
                             mention, CallbackQuery.message.chat.title
@@ -216,7 +227,6 @@ async def del_back_playlist(client, CallbackQuery, _):
         
         await CallbackQuery.answer()
         
-        # Check if queue is empty after skip (Redundant safety check)
         if not check:
              return
              
@@ -264,7 +274,10 @@ async def del_back_playlist(client, CallbackQuery, _):
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
-            await CallbackQuery.edit_message_text(txt, reply_markup=close_markup(_))
+            try:
+                await CallbackQuery.edit_message_text(txt, reply_markup=close_markup(_))
+            except:
+                pass
         elif "vid_" in queued:
             mystic = await CallbackQuery.message.reply_text(
                 _["call_7"], disable_web_page_preview=True
@@ -301,7 +314,10 @@ async def del_back_playlist(client, CallbackQuery, _):
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "stream"
-            await CallbackQuery.edit_message_text(txt, reply_markup=close_markup(_))
+            try:
+                await CallbackQuery.edit_message_text(txt, reply_markup=close_markup(_))
+            except:
+                pass
             await mystic.delete()
         elif "index_" in queued:
             try:
@@ -317,7 +333,10 @@ async def del_back_playlist(client, CallbackQuery, _):
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
-            await CallbackQuery.edit_message_text(txt, reply_markup=close_markup(_))
+            try:
+                await CallbackQuery.edit_message_text(txt, reply_markup=close_markup(_))
+            except:
+                pass
         else:
             if videoid == "telegram":
                 image = None
@@ -378,7 +397,10 @@ async def del_back_playlist(client, CallbackQuery, _):
                 )
                 db[chat_id][0]["mystic"] = run
                 db[chat_id][0]["markup"] = "stream"
-            await CallbackQuery.edit_message_text(txt, reply_markup=close_markup(_))
+            try:
+                await CallbackQuery.edit_message_text(txt, reply_markup=close_markup(_))
+            except:
+                pass
 
 
 async def markup_timer():
@@ -423,6 +445,5 @@ async def markup_timer():
                     continue
             except:
                 continue
-
 
 asyncio.create_task(markup_timer())
