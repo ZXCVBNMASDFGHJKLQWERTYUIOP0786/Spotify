@@ -21,8 +21,10 @@ from KanhaMusic.utils.database import (get_active_chats, get_lang,
                                        music_off, music_on, set_loop)
 from KanhaMusic.utils.decorators.language import languageCB
 from KanhaMusic.utils.formatters import seconds_to_min
-from KanhaMusic.utils.inline import (close_markup, stream_markup,
-from KanhaMusic.utils.inline.start import support_panel                                    stream_markup_timer)
+# --- FIX: Imports separated correctly ---
+from KanhaMusic.utils.inline import (close_markup, stream_markup, stream_markup_timer)
+from KanhaMusic.utils.inline.start import support_panel                                    
+# ----------------------------------------
 from KanhaMusic.utils.stream.autoclear import auto_clean
 from KanhaMusic.utils.thumbnails import get_thumb
 from config import (BANNED_USERS, SOUNCLOUD_IMG_URL, STREAM_IMG_URL,
@@ -46,14 +48,19 @@ async def del_back_playlist(client, CallbackQuery, _):
     callback_data = CallbackQuery.data.strip()
     callback_request = callback_data.split(None, 1)[1]
     command, chat = callback_request.split("|")
+    
+    # --- FIX: Initialize counter safely ---
+    counter = None
     if "_" in str(chat):
         bet = chat.split("_")
         chat = bet[0]
         counter = bet[1]
+    
     chat_id = int(chat)
     if not await is_active_chat(chat_id):
         return await CallbackQuery.answer(_["general_5"], show_alert=True)
     mention = CallbackQuery.from_user.mention
+    
     if command == "UpVote":
         if chat_id not in votemode:
             votemode[chat_id] = {}
@@ -89,16 +96,22 @@ async def del_back_playlist(client, CallbackQuery, _):
                 return await CallbackQuery.edit_message_text("ғᴀɪʟᴇᴅ.")
             try:
                 if current["vidid"] != exists["vidid"]:
-                    return await CallbackQuery.edit_message.text(_["admin_35"])
+                    # --- FIX: edit_message.text -> edit_message_text ---
+                    return await CallbackQuery.edit_message_text(_["admin_35"])
                 if current["file"] != exists["file"]:
-                    return await CallbackQuery.edit_message.text(_["admin_35"])
+                    # --- FIX: edit_message.text -> edit_message_text ---
+                    return await CallbackQuery.edit_message_text(_["admin_35"])
             except:
                 return await CallbackQuery.edit_message_text(_["admin_36"])
             try:
                 await CallbackQuery.edit_message_text(_["admin_37"].format(upvote))
             except:
                 pass
-            command = counter
+            
+            # --- FIX: Check if counter exists before assignment ---
+            if counter:
+                command = counter
+                
             mention = "ᴜᴘᴠᴏᴛᴇs"
         else:
             if (
@@ -157,7 +170,10 @@ async def del_back_playlist(client, CallbackQuery, _):
         await CallbackQuery.message.reply_text(
             _["admin_5"].format(mention), reply_markup=close_markup(_)
         )
-        await CallbackQuery.message.delete()
+        try:
+            await CallbackQuery.message.delete()
+        except:
+            pass
     elif command == "Skip" or command == "Replay":
         check = db.get(chat_id)
         if command == "Skip":
@@ -197,7 +213,13 @@ async def del_back_playlist(client, CallbackQuery, _):
                     return
         else:
             txt = f"➻ sᴛʀᴇᴀᴍ ʀᴇ-ᴘʟᴀʏᴇᴅ 🎄\n│ \n└ʙʏ : {mention} 🥀"
+        
         await CallbackQuery.answer()
+        
+        # Check if queue is empty after skip (Redundant safety check)
+        if not check:
+             return
+             
         queued = check[0]["file"]
         title = (check[0]["title"]).title()
         user = check[0]["by"]
