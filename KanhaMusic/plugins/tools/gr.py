@@ -231,7 +231,7 @@ async def protect(msg: Message):
 
 
 
-@app.on_message(filters.group & filters.command("settings"))
+@app.on_message(filters.group & filters.command("gpset"))
 async def settings_cmd(_, msg):
     if not await check_admin_cached(msg.chat.id, msg.from_user.id):
         return
