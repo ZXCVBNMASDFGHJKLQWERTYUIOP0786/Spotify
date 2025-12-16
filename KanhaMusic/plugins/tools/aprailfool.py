@@ -132,8 +132,7 @@ async def camera(_, message: Message):
 
 @app.on_message(filters.command("sim"))
 async def sim(_, message: Message):
-
-if len(message.command) < 2:
+    if len(message.command) < 2:
         return await message.reply_text("Usage: /sim username")
     await run_prank(
         message,
