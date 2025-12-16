@@ -6,7 +6,7 @@ import aiofiles
 from pyrogram import Client, filters
 from pyrogram.types import Message, InputMediaPhoto
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
-from youtubesearchpython.future import VideosSearch
+from py_yt import VideosSearch
 
 # ================= CONFIG =================
 
