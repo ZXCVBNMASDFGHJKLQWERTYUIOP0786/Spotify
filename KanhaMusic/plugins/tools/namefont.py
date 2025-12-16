@@ -1,6 +1,6 @@
 from pyrogram import filters
 from pyrogram.types import Message
-from app import app
+from KanhaMusic import app
 
 # ================= FONT MAP =================
 
