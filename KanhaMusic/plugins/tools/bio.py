@@ -8,6 +8,7 @@ from pyrogram.enums import ChatMemberStatus
 from KanhaMusic import app
 
 # ===== MEMORY =====
+BIO_LINK = {}          # <-- ON/OFF store
 LOG_CHANNEL = {}
 COOLDOWN = {}
 
@@ -17,7 +18,7 @@ LINK_REGEX = re.compile(
     re.IGNORECASE
 )
 
-# ===== ADMIN CHECK (GROUP SAFE) =====
+# ===== ADMIN CHECK =====
 async def is_admin(client, chat_id, user_id):
     try:
         member = await client.get_chat_member(chat_id, user_id)
@@ -27,6 +28,32 @@ async def is_admin(client, chat_id, user_id):
         )
     except:
         return False
+
+# ===== BIOLINK ON/OFF COMMAND =====
+@app.on_message(filters.command("biolink") & filters.group)
+async def biolink_toggle(_, message: Message):
+    if not await is_admin(app, message.chat.id, message.from_user.id):
+        return await message.reply("❌ Only admins can use this command.")
+
+    if len(message.command) < 2:
+        status = BIO_LINK.get(message.chat.id, False)
+        return await message.reply(
+            f"ℹ️ Bio Link Guard is currently {'ON' if status else 'OFF'}\n\n"
+            "Usage:\n"
+            "/biolink on – Enable\n"
+            "/biolink off – Disable"
+        )
+
+    arg = message.command[1].lower()
+
+    if arg == "on":
+        BIO_LINK[message.chat.id] = True
+        await message.reply("✅ Bio Link Guard ENABLED")
+    elif arg == "off":
+        BIO_LINK[message.chat.id] = False
+        await message.reply("❌ Bio Link Guard DISABLED")
+    else:
+        await message.reply("Usage: /biolink on | /biolink off")
 
 # ===== OPTIONAL: SET LOG CHANNEL =====
 @app.on_message(filters.command("setlog") & filters.group)
@@ -43,7 +70,7 @@ async def set_log(_, message: Message):
     except:
         await message.reply("❌ Invalid channel ID.")
 
-# ===== GLOBAL WATCHER (GROUP ONLY) =====
+# ===== WATCHER (GROUP ONLY) =====
 @app.on_message(filters.group & filters.text)
 async def bio_checker(_, message: Message):
 
@@ -52,6 +79,10 @@ async def bio_checker(_, message: Message):
 
     chat_id = message.chat.id
     user_id = message.from_user.id
+
+    # 🔘 Check if feature is ON
+    if not BIO_LINK.get(chat_id, False):
+        return
 
     # Admin safe
     if await is_admin(app, chat_id, user_id):
@@ -70,7 +101,6 @@ async def bio_checker(_, message: Message):
 
     bio = getattr(user, "bio", "") or ""
 
-    # 🔑 MAIN CHECK
     if not LINK_REGEX.search(bio):
         return
 
@@ -120,7 +150,7 @@ async def bio_checker(_, message: Message):
     except:
         pass
 
-    # Log channel
+# Log channel
     log_id = LOG_CHANNEL.get(chat_id)
     if log_id:
         await app.send_message(
