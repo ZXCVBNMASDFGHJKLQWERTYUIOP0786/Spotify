@@ -5,8 +5,8 @@ from pyrogram import filters
 from pyrogram.types import Message
 from pyrogram.enums import ChatMemberStatus
 
-# IMPORTANT: apne bot ka app import karo
-from KanhaMusic import app   # <-- yahi main fix hai
+# MAIN APP IMPORT (VERY IMPORTANT)
+from KanhaMusic import app
 
 # ===== MEMORY =====
 BIO_LINK = {}
@@ -30,7 +30,7 @@ async def is_admin(client, chat_id, user_id):
     except:
         return False
 
-# ===== COMMAND: /biolink =====
+# ===== /biolink =====
 @app.on_message(filters.command("biolink") & filters.group)
 async def biolink_toggle(_, message: Message):
     if not await is_admin(app, message.chat.id, message.from_user.id):
@@ -42,12 +42,11 @@ async def biolink_toggle(_, message: Message):
     BIO_LINK[message.chat.id] = message.command[1].lower() == "on"
     await message.reply("✅ Bio Link Guard updated successfully.")
 
-# ===== COMMAND: /setlog =====
+# ===== /setlog =====
 @app.on_message(filters.command("setlog") & filters.group)
 async def set_log(_, message: Message):
     if not await is_admin(app, message.chat.id, message.from_user.id):
         return
-
     try:
         LOG_CHANNEL[message.chat.id] = int(message.command[1])
         await message.reply("📢 Log channel set successfully.")
@@ -78,11 +77,13 @@ async def bio_checker(_, message: Message):
     except:
         return
 
-    bio = user.bio or ""
+    # ✅ SAFE BIO ACCESS (MAIN FIX)
+    bio = getattr(user, "bio", "") or ""
+
     if not LINK_REGEX.search(bio):
         return
 
-    # Delete user message
+    # Delete message
     try:
         await message.delete()
     except:
