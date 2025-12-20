@@ -5,11 +5,9 @@ from pyrogram import filters
 from pyrogram.types import Message
 from pyrogram.enums import ChatMemberStatus
 
-# MAIN APP IMPORT (VERY IMPORTANT)
 from KanhaMusic import app
 
 # ===== MEMORY =====
-BIO_LINK = {}
 LOG_CHANNEL = {}
 COOLDOWN = {}
 
@@ -19,67 +17,60 @@ LINK_REGEX = re.compile(
     re.IGNORECASE
 )
 
-# ===== ADMIN CHECK =====
+# ===== ADMIN CHECK (GROUP SAFE) =====
 async def is_admin(client, chat_id, user_id):
     try:
-        m = await client.get_chat_member(chat_id, user_id)
-        return m.status in (
+        member = await client.get_chat_member(chat_id, user_id)
+        return member.status in (
             ChatMemberStatus.ADMINISTRATOR,
             ChatMemberStatus.OWNER
         )
     except:
         return False
 
-# ===== /biolink =====
-@app.on_message(filters.command("biolink") & filters.group)
-async def biolink_toggle(_, message: Message):
+# ===== OPTIONAL: SET LOG CHANNEL =====
+@app.on_message(filters.command("setlog") & filters.group)
+async def set_log(_, message: Message):
     if not await is_admin(app, message.chat.id, message.from_user.id):
         return await message.reply("❌ Only admins can use this command.")
 
     if len(message.command) < 2:
-        return await message.reply("ℹ️ Usage: /biolink on | /biolink off")
+        return await message.reply("Usage: /setlog <channel_id>")
 
-    BIO_LINK[message.chat.id] = message.command[1].lower() == "on"
-    await message.reply("✅ Bio Link Guard updated successfully.")
-
-# ===== /setlog =====
-@app.on_message(filters.command("setlog") & filters.group)
-async def set_log(_, message: Message):
-    if not await is_admin(app, message.chat.id, message.from_user.id):
-        return
     try:
         LOG_CHANNEL[message.chat.id] = int(message.command[1])
         await message.reply("📢 Log channel set successfully.")
     except:
         await message.reply("❌ Invalid channel ID.")
 
-# ===== WATCHER =====
+# ===== GLOBAL WATCHER (GROUP ONLY) =====
 @app.on_message(filters.group & filters.text)
 async def bio_checker(_, message: Message):
+
+    if not message.from_user:
+        return
+
     chat_id = message.chat.id
     user_id = message.from_user.id
 
-    if not BIO_LINK.get(chat_id):
-        return
-
-    # Admin / Owner safe
+    # Admin safe
     if await is_admin(app, chat_id, user_id):
         return
 
-    # Cooldown (10 sec)
+    # Cooldown (10 sec per user)
     now = time.time()
-    if COOLDOWN.get(user_id, 0) > now:
+    if COOLDOWN.get((chat_id, user_id), 0) > now:
         return
-    COOLDOWN[user_id] = now + 10
+    COOLDOWN[(chat_id, user_id)] = now + 10
 
     try:
         user = await app.get_users(user_id)
     except:
         return
 
-    # ✅ SAFE BIO ACCESS (MAIN FIX)
     bio = getattr(user, "bio", "") or ""
 
+    # 🔑 MAIN CHECK
     if not LINK_REGEX.search(bio):
         return
 
@@ -87,9 +78,9 @@ async def bio_checker(_, message: Message):
     try:
         await message.delete()
     except:
-        return
+        pass
 
-    # 🔄 Progress bar animation
+    # 🔄 Progress animation
     anim = await message.reply("🔎 Checking profile...\n\n□□□□□□□□□□")
 
     bars = [
@@ -106,7 +97,7 @@ async def bio_checker(_, message: Message):
     ]
 
     for bar in bars:
-        await asyncio.sleep(0.25)
+        await asyncio.sleep(0.2)
         try:
             await anim.edit(f"🔎 Checking profile...\n\n{bar}")
         except:
@@ -119,7 +110,7 @@ async def bio_checker(_, message: Message):
         "🔗 Your profile bio contains a link.\n"
         "🚫 Links are not allowed in this group.\n\n"
         "📝 Please remove the link from your bio\n"
-        "✅ and try sending your message again."
+        "✅ and try again."
     )
 
     # Auto delete warning
