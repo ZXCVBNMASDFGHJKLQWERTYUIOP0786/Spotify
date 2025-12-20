@@ -1,12 +1,12 @@
 import re
 import asyncio
 import time
-from pyrogram import Client, filters
+from pyrogram import filters
 from pyrogram.types import Message
 from pyrogram.enums import ChatMemberStatus
 
-# ===== CLIENT (NO API / TOKEN HERE) =====
-app = Client("BioLinkGuardBot")
+# IMPORTANT: apne bot ka app import karo
+from KanhaMusic import app   # <-- yahi main fix hai
 
 # ===== MEMORY =====
 BIO_LINK = {}
@@ -22,8 +22,8 @@ LINK_REGEX = re.compile(
 # ===== ADMIN CHECK =====
 async def is_admin(client, chat_id, user_id):
     try:
-        member = await client.get_chat_member(chat_id, user_id)
-        return member.status in (
+        m = await client.get_chat_member(chat_id, user_id)
+        return m.status in (
             ChatMemberStatus.ADMINISTRATOR,
             ChatMemberStatus.OWNER
         )
@@ -32,8 +32,8 @@ async def is_admin(client, chat_id, user_id):
 
 # ===== COMMAND: /biolink =====
 @app.on_message(filters.command("biolink") & filters.group)
-async def biolink_toggle(client: Client, message: Message):
-    if not await is_admin(client, message.chat.id, message.from_user.id):
+async def biolink_toggle(_, message: Message):
+    if not await is_admin(app, message.chat.id, message.from_user.id):
         return await message.reply("❌ Only admins can use this command.")
 
     if len(message.command) < 2:
@@ -44,9 +44,10 @@ async def biolink_toggle(client: Client, message: Message):
 
 # ===== COMMAND: /setlog =====
 @app.on_message(filters.command("setlog") & filters.group)
-async def set_log(client: Client, message: Message):
-    if not await is_admin(client, message.chat.id, message.from_user.id):
+async def set_log(_, message: Message):
+    if not await is_admin(app, message.chat.id, message.from_user.id):
         return
+
     try:
         LOG_CHANNEL[message.chat.id] = int(message.command[1])
         await message.reply("📢 Log channel set successfully.")
@@ -55,7 +56,7 @@ async def set_log(client: Client, message: Message):
 
 # ===== WATCHER =====
 @app.on_message(filters.group & filters.text)
-async def bio_checker(client: Client, message: Message):
+async def bio_checker(_, message: Message):
     chat_id = message.chat.id
     user_id = message.from_user.id
 
@@ -63,7 +64,7 @@ async def bio_checker(client: Client, message: Message):
         return
 
     # Admin / Owner safe
-    if await is_admin(client, chat_id, user_id):
+    if await is_admin(app, chat_id, user_id):
         return
 
     # Cooldown (10 sec)
@@ -73,7 +74,7 @@ async def bio_checker(client: Client, message: Message):
     COOLDOWN[user_id] = now + 10
 
     try:
-        user = await client.get_users(user_id)
+        user = await app.get_users(user_id)
     except:
         return
 
@@ -81,7 +82,7 @@ async def bio_checker(client: Client, message: Message):
     if not LINK_REGEX.search(bio):
         return
 
-    # Delete message
+    # Delete user message
     try:
         await message.delete()
     except:
@@ -110,7 +111,7 @@ async def bio_checker(client: Client, message: Message):
         except:
             pass
 
-    # ⚠️ FINAL WARNING (BOLD + EMOJI)
+    # ⚠️ FINAL WARNING
     await anim.edit(
         f"⚠️ WARNING ALERT ⚠️\n\n"
         f"👤 {message.from_user.mention}\n\n"
@@ -127,16 +128,13 @@ async def bio_checker(client: Client, message: Message):
     except:
         pass
 
-    # Log channel (optional)
+    # Log channel
     log_id = LOG_CHANNEL.get(chat_id)
     if log_id:
-        await client.send_message(
+        await app.send_message(
             log_id,
             f"🔗 Bio Link Blocked\n\n"
             f"👤 User: {message.from_user.mention}\n"
             f"🆔 ID: {user_id}\n"
             f"📝 Bio:\n{bio}"
         )
-
-# ===== START =====
-app.run()
